@@ -145,13 +145,18 @@ imply the other three, since Hardened's source does not compile without them.
 
 Section 11 of the plan. Each is recorded here with what was observed.
 
-## 1. The AWS SDK under AOT
+## 1. The AWS SDK under AOT   Answered 2026-09-06
 
-    Open. Needs a throwaway function published with PublishAot against AWSSDK.CloudWatchLogs,
-    AWSSDK.DynamoDBv2 and AWSSDK.Lambda, recording every trim and AOT warning.
+**The 3.7 line publishes clean. Zero trim and AOT warnings.**
 
-Pinned in `Directory.Packages.props` on the 3.7 line for now, matching the `AWSSDK.DynamoDBv2`
-3.7.513.4 that Amz pins. 4.x exists for all three and is the fallback if 3.7 warns.
+A throwaway `net8.0` executable referencing `AWSSDK.CloudWatchLogs` 3.7.509.3,
+`AWSSDK.DynamoDBv2` 3.7.513.4 and `AWSSDK.Lambda` 3.7.511.24, constructing all three clients and
+touching `StartQueryRequest`, `GetQueryResultsRequest`, `QueryRequest` and `InvokeRequest`,
+published with `PublishAot` and `TrimmerSingleWarn=false` for `osx-arm64`. ILC emitted no `IL2xxx`
+or `IL3xxx` at all. The binary is 11.3 MB and runs.
+
+So the pins stay on 3.7 and 4.x is not needed. Recheck when the samples call these for real: this
+probe covers construction and request types, not response deserialization.
 
 ## 2. The host seam   Answered 2026-09-06
 
@@ -180,10 +185,18 @@ Everything it settles is marked **unverified** in `docs/reference/` until it run
     Open. Run Echo under the test tool and read what Lambda-Runtime-Invoked-Function-Arn carries,
     so the harness's name mapping and the helper's endpoint agree locally.
 
-## 5. The parsers under AOT
+## 5. The parsers under AOT   Answered 2026-09-06
 
-    Open. Publish a throwaway referencing AngleSharp and Markdig with PublishAot and record the
-    warnings. Decides section 6's HTML and markdown parsing.
+**Both publish clean. Zero trim and AOT warnings. Take AngleSharp and Markdig.**
+
+A throwaway referencing AngleSharp 1.8.0 and Markdig 1.3.2, published the same way, produced no
+`IL2xxx` or `IL3xxx` and a 7.45 MB binary. The probe did the three jobs the interpreter actually
+needs rather than just linking the assemblies: it found a `cwdb-action` and its
+`PreviousElementSibling`, enumerated `input[name], textarea[name], select[name]`, and rendered
+describe markdown with a fenced `yaml` block.
+
+That settles section 6. No purpose-built tokenizer, and the harness page does not have to render
+markdown in the browser.
 
 ## 6. Amz 0.22.0   Answered 2026-09-06
 

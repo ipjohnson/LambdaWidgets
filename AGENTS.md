@@ -111,6 +111,27 @@ not anything here ships, and a claim in it that has not been read from AWS's doc
 observed on a real dashboard is marked **unverified**. `docs/status.md` is what says which items
 exist; individual guide pages carry a warning block rather than hedging in prose.
 
+## Publishing AOT on macOS
+
+The harness ships as a native binary, so `dotnet publish -p:PublishAot=true` has to work locally.
+On a machine with Homebrew LLVM on the path it fails at the *link* step, after ILC has already
+generated the object file, with `ld: library not found for -ldl` and a missing-sysroot warning
+naming a `CommandLineTools` SDK that is not installed:
+
+```
+clang: warning: no such sysroot directory: '/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk'
+```
+
+Homebrew's clang is being picked over Xcode's. Point the build at Xcode's toolchain:
+
+```bash
+export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+export PATH="$(dirname $(xcrun -f clang)):$PATH"
+```
+
+The failure looks like an AOT problem in a dependency and is not one. Read the log above the link
+step: if `Generating native code` finished with no `IL2xxx` or `IL3xxx`, the managed side is fine.
+
 ## One PR at a time
 
 Work in a clone under `/private/tmp`, never under `/tmp`.

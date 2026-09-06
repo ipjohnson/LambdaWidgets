@@ -60,6 +60,15 @@
         <PackageVersion Include="ValidationModules.SourceGenerator.Impl" Version="1.0.0" />
     </ItemGroup>
 
+    <!--
+      Both publish AOT with zero trim and AOT warnings, checked against the jobs the interpreter
+      actually does rather than by linking them. See FINDINGS.md day-one check 5.
+    -->
+    <ItemGroup Label="Parsing">
+        <PackageVersion Include="AngleSharp" Version="1.8.0" />
+        <PackageVersion Include="Markdig" Version="1.3.2" />
+    </ItemGroup>
+
     <ItemGroup Label="Templates">
         <PackageVersion Include="RazorBlade" Version="1.0.0" />
     </ItemGroup>
