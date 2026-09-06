@@ -1,0 +1,69 @@
+<Project>
+
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <!--
+      Package metadata shared by every package here. Per-package Description and PackageId stay
+      in the csproj, since those genuinely differ.
+    -->
+    <PropertyGroup>
+        <Authors>Ian Johnson</Authors>
+        <PackageProjectUrl>https://github.com/ipjohnson/LambdaWidgets</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/ipjohnson/LambdaWidgets</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>cloudwatch;custom-widget;lambda;dashboard;hardened;aot</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <!--
+      PackageReadmeFile names a file inside the nupkg, so it has to be packed as well as declared;
+      a declaration without the file is NU5039 at pack time. One readme for every package, from
+      the repository root, because the packages are one product and a per-package readme is a
+      second place for the story to go stale.
+    -->
+    <ItemGroup Condition="'$(IsPackable)' == 'true'">
+        <None Include="$(MSBuildThisFileDirectory)README.md"
+              Pack="true" PackagePath="/" Visible="false" />
+    </ItemGroup>
+
+    <!--
+      Warnings become errors on CI only, so an in-progress edit with an unused variable does not
+      block the inner loop. Hardened.Framework does the same, and its AGENTS.md is explicit that a
+      build green locally can still fail CI on a warning. Build the way CI does before opening a PR:
+
+          dotnet build LambdaWidgets.sln -c Release -p:ContinuousIntegrationBuild=true
+    -->
+    <PropertyGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <!--
+      CS8785 is "a source generator threw", which Roslyn reports as a warning. A generator that
+      dies mid-run has emitted some of its output and none of the rest, so the assembly that comes
+      out is missing wiring nobody asked it to leave out. Not scoped to CI: the local build is the
+      one that should say so.
+    -->
+    <PropertyGroup>
+        <WarningsAsErrors>$(WarningsAsErrors);CS8785</WarningsAsErrors>
+    </PropertyGroup>
+
+    <!--
+      RS2008 asks an analyzer project to keep an AnalyzerReleases.Shipped.md tracking file. It
+      fires here for rules this repository does not own: Hardened.SourceGenerator and
+      ValidationModules.SourceGenerator.Impl ship their .cs under src/ in the package, so their
+      DiagnosticDescriptors are compiled into whichever generator project references them and
+      reported against it. Nothing here can add release tracking for another repository's rules.
+
+      68 errors under ContinuousIntegrationBuild before this, none of them in a file this
+      repository has. Hardened.Amz suppresses it the same way and for the same reason.
+    -->
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('SourceGenerator'))">
+        <NoWarn>$(NoWarn);RS2008</NoWarn>
+    </PropertyGroup>
+
+</Project>

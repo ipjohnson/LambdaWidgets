@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LambdaWidgets.Dashboard/LambdaWidgets.Dashboard.csproj" />
+    <Project Path="src/LambdaWidgets.Harness/LambdaWidgets.Harness.csproj" />
+    <Project Path="src/LambdaWidgets.Runtime/LambdaWidgets.Runtime.csproj" />
+    <Project Path="src/LambdaWidgets.SourceGenerator/LambdaWidgets.SourceGenerator.csproj" />
+    <Project Path="src/LambdaWidgets.Testing/LambdaWidgets.Testing.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LambdaWidgets.Dashboard.Tests/LambdaWidgets.Dashboard.Tests.csproj" />
+  </Folder>
+</Solution>

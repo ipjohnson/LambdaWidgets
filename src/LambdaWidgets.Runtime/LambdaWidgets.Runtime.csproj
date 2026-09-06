@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>LambdaWidgets.Runtime</PackageId>
+        <Description>The widget host for a Hardened application: routing and binding from the widget event, Razor helpers that emit cwdb-action from generated links, describe, and the typed widget context.</Description>
+        <IsAotCompatible>true</IsAotCompatible>
+    </PropertyGroup>
+
+    <!--
+      Exactly the set a [LambdaWebModule] application carries, with the Amz web generator swapped
+      out. A widget application is web-shaped on a third host, so the generated Routes and Links
+      types, the template bases, validation and the route table are all available unchanged.
+    -->
+    <ItemGroup>
+        <PackageReference Include="Amazon.Lambda.Core" />
+        <PackageReference Include="Hardened.Amz.Shared.Lambda.Runtime" />
+        <PackageReference Include="Hardened.Requests.Abstract" />
+        <PackageReference Include="Hardened.Requests.Runtime" />
+        <PackageReference Include="Hardened.Shared.Runtime" />
+        <PackageReference Include="Hardened.Templates.RazorBlade" />
+        <PackageReference Include="Hardened.Web.Runtime" />
+    </ItemGroup>
+
+</Project>

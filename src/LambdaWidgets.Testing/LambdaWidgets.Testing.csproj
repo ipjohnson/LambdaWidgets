@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>LambdaWidgets.Testing</PackageId>
+        <Description>A click-through test driver for widget applications. Drives the generated Invoke in-process; needs neither the test tool nor the harness.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Hardened.Amz.Shared.Lambda.Testing" />
+        <PackageReference Include="Hardened.Shared.Testing" />
+        <ProjectReference Include="..\LambdaWidgets.Dashboard\LambdaWidgets.Dashboard.csproj" />
+        <ProjectReference Include="..\LambdaWidgets.Runtime\LambdaWidgets.Runtime.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,33 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Two runtimes, both load-bearing. global.json pins the .NET 10 SDK, and every project targets
+      # net8.0 with no rollForward, so a runner with only the 10 SDK compiles everything and then
+      # starts no test host at all.
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - run: dotnet tool restore
+      - run: dotnet restore LambdaWidgets.slnx
+
+      # ContinuousIntegrationBuild sets TreatWarningsAsErrors. It is the whole point of this job:
+      # local builds deliberately do not, so this is the run that catches a warning.
+      - name: Build
+        run: dotnet build LambdaWidgets.slnx --configuration Release -p:ContinuousIntegrationBuild=true --no-restore
+
+      - name: Test
+        run: dotnet test LambdaWidgets.slnx --configuration Release -p:ContinuousIntegrationBuild=true --no-build --logger "console;verbosity=normal"

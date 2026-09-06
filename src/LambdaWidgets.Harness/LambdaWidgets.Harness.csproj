@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>lambda-widgets</AssemblyName>
+        <RootNamespace>LambdaWidgets.Harness</RootNamespace>
+        <IsAotCompatible>true</IsAotCompatible>
+        <InvariantGlobalization>true</InvariantGlobalization>
+
+        <!-- Also shipped as a dotnet tool, for .NET users who already have the SDK. The native
+             binaries and the Docker image are built by release.yaml from the same project. -->
+        <IsPackable>true</IsPackable>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>lambda-widgets</ToolCommandName>
+        <PackageId>LambdaWidgets.Harness</PackageId>
+        <Description>A console-shaped dashboard that runs on your machine, interprets cwdb-action clicks and forms, and invokes a custom widget through any Lambda Invoke API endpoint. Any language.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Hardened.Web.Kestrel.Runtime" />
+        <PackageReference Include="Hardened.Web.StaticContent" />
+        <PackageReference Include="Hardened.Templates.RazorBlade" />
+        <PackageReference Include="RazorBlade" />
+        <PackageReference Include="AWSSDK.Lambda" />
+        <ProjectReference Include="..\LambdaWidgets.Dashboard\LambdaWidgets.Dashboard.csproj" />
+    </ItemGroup>
+
+</Project>

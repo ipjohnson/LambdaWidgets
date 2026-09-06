@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>LambdaWidgets.Dashboard</PackageId>
+        <Description>The CloudWatch custom widget contract as a library: events, cwdb-action, forms, the sanitizer and the default styles. No host, no HTTP, no UI.</Description>
+        <!-- The harness ships as a native binary, so everything it links must publish clean. -->
+        <IsAotCompatible>true</IsAotCompatible>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Text.Json" />
+    </ItemGroup>
+
+</Project>
