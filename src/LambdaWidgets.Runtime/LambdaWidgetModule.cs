@@ -2,6 +2,7 @@ using DependencyModules.Runtime.Attributes;
 using DependencyModules.Runtime.Interfaces;
 using Hardened.Aws.Lambda.Runtime.Adapters;
 using Hardened.Aws.Lambda.Runtime.Modules;
+using Hardened.Shared.Runtime.Application;
 using Hardened.Web.Runtime.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -50,5 +51,12 @@ public partial class LambdaWidgetModule : IServiceCollectionConfiguration {
         // Scoped, so a handler takes IWidgetContext as a parameter and gets this invocation's.
         services.TryAddScoped(provider =>
             provider.GetRequiredService<WidgetContextAccessor>().Value);
+
+        // Describe, answered ahead of dispatch. The default says nothing, which is what AWS
+        // recommends for a widget with no documentation and is why an application that writes none
+        // still answers the console's button.
+        services.TryAddSingleton<IWidgetDocs, NoWidgetDocs>();
+        services.TryAddSingleton<DescribeFilter>();
+        services.AddSingleton<IStartupService, DescribeStartupService>();
     }
 }

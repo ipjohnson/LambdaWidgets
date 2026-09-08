@@ -48,6 +48,7 @@ public sealed class WidgetAdapter : IPayloadAdapter {
         // Held for the scope so a handler can take IWidgetContext, and so the Razor helpers can
         // reach the invoked ARN without every template being handed it.
         _context.Current = invocation.Context;
+        _context.Describe = invocation.Describe;
 
         return WidgetRequest.From(invocation);
     }
@@ -138,6 +139,14 @@ public sealed class WidgetAdapter : IPayloadAdapter {
 /// </remarks>
 public sealed class WidgetContextAccessor {
     internal IWidgetContext? Current { get; set; }
+
+    /// <summary>Whether this invocation is the console asking for documentation.</summary>
+    /// <remarks>
+    /// Here rather than on <see cref="IWidgetContext"/>, which is what the dashboard sent. Describe
+    /// is a property of the invocation, and a handler never sees one: the filter answers before
+    /// anything routes.
+    /// </remarks>
+    internal bool Describe { get; set; }
 
     public IWidgetContext Value =>
         Current ?? throw new InvalidOperationException(

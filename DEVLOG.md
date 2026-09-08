@@ -234,3 +234,35 @@ same name — it is `WidgetHelpers` now, and the interpreter keeps the better na
 
 Mutation-checked: never quoting a view fails nine tests, hard-coding the endpoint fails one.
 49 tests.
+
+## 2026-09-08 — Describe, Echo, and item 2 closed
+
+Describe is a filter that answers before dispatch. The console sends the widget's configured
+parameters on a describe invocation exactly as it does on any other, so there is a route in the
+event and a handler that would match it — running it would do the widget's work and throw the answer
+away. On a search widget a describe would run the search. Returning without calling `chain.Next()`
+is the whole mechanism, and `LambdaInvocationHandler` appending dispatch to the end of the chain on
+first invocation is what makes a startup-registered filter land ahead of it.
+
+A widget registers `IWidgetDocs`. The default says nothing, because AWS recommends answering
+describe even with an empty string and the console's button is there either way.
+
+Echo is the sample AWS documents, so a reader can compare it line for line with the Python and
+JavaScript versions. It renders the `echo` parameter unescaped and shows the `widgetContext` under
+it — which is the sample's real job, because a widget author's first question is what the console
+actually sends, and that is easier to read on a dashboard than in a log. It is also the probe
+day-one check 3 needs: feeding markup through `echo` and reading back what survived is how the
+console's sanitizer gets documented.
+
+`Echo.Tests` is the sample's test and the framework's integration test at once. Every piece of the
+runtime is in the path — adapter, merge, context, view base, helpers, describe — and none of it is
+named in an assertion. What is asserted is what a viewer would see, read back through
+`LambdaWidgets.Dashboard`.
+
+One assertion of mine was wrong and the suite caught it:
+`DescribeAnswersWithDocumentationRatherThanTheWidget` asserted the answer omits `Hello world`, which
+fails because the yaml block the console lifts uses exactly that as its example. The right way to
+assert it is `DescribeDoesNotRunTheWidget`, with an echoed value the documentation does not itself
+contain.
+
+Mutation-checked: never short-circuiting describe fails three tests. 93 tests across the solution.
