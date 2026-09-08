@@ -1,7 +1,7 @@
 @inherits Graph.GraphAppChartTemplates<Graph.GraphPage>
 @Widget.Root()
 @if (Model.Detail is not null) {
-  @Widget.Link("← Back", "/")
+  @Widget.Link("← Back", Links.Pages.Index())
 }
 @Draw(Model.Open)
 @Draw(Model.Requests)

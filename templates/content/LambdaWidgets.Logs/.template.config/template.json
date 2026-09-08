@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Ian Johnson",
+  "classifications": [
+    "Cloud",
+    "AWS",
+    "CloudWatch",
+    "Lambda",
+    "Widget"
+  ],
+  "identity": "LambdaWidgets.Logs",
+  "name": "CloudWatch custom widget - Logs Insights search",
+  "shortName": "lw-logs",
+  "description": "A widget that runs a Logs Insights query over the dashboard's time range and renders the rows.",
+  "sourceName": "WidgetName",
+  "defaultName": "MyWidget",
+  "preferNameDirectory": false,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "hardenedVersion": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "0.30.0-rc1000",
+      "replaces": "HARDENED_VERSION",
+      "description": "The Hardened.Framework version to reference."
+    },
+    "widgetsVersion": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "1.0.0",
+      "replaces": "LAMBDAWIDGETS_VERSION",
+      "description": "The LambdaWidgets version to reference."
+    },
+    "tests": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include the test project that drives the widget the way a viewer does."
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!tests)",
+          "exclude": [
+            "WidgetName.Tests/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": [
+    {
+      "description": "Restore the generated projects.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+@inherits WidgetName.WidgetNameAppWidgetTemplates<WidgetName.LookupPage>
+@Widget.Root()
+<form>
+  <input name="partitionKey" value="@Model.PartitionKey" size="40">
+  <input name="sortPrefix" value="@Model.SortPrefix" size="40">
+</form>
+@Widget.Button("Look up", Links.Pages.LookUp(), primary: true)
+@Widget.Link("Back", Links.Pages.Index())
+@if (Model.Page is null || Model.Page.Items.Count == 0) {
+  <p>No items for that key.</p>
+} else {
+  <table>
+    <tr>@foreach (var field in Model.Page.Items[0].Fields) {<th>@field.Field</th>}</tr>
+    @foreach (var item in Model.Page.Items) {
+      <tr>@foreach (var field in item.Fields) {<td>@field.Value</td>}</tr>
+    }
+  </table>
+  @if (Model.Page.HasMore) {
+    @* The cursor rides in the link the viewer is about to click. There is nowhere else to keep
+       it: the console gives a widget no session at all. *@
+    @Widget.Link("Next", Links.Pages.LookUp(), ("cursor", Model.Page.Cursor))
+  }
+}
+@Widget.EndRoot()

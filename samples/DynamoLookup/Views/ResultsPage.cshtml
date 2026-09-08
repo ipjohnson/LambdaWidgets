@@ -4,8 +4,8 @@
   <input name="partitionKey" value="@Model.PartitionKey">
   <input name="sortPrefix" value="@Model.SortPrefix">
 </form>
-@Widget.Button("Look up", "/look-up", primary: true)
-@Widget.Link("Back", "/")
+@Widget.Button("Look up", Links.Pages.LookUp(), primary: true)
+@Widget.Link("Back", Links.Pages.Index())
 @if (Model.Page is null || Model.Page.Items.Count == 0) {
   <p>No items for @Model.PartitionKey.</p>
 } else {
@@ -23,7 +23,7 @@
     line the whole sample exists for.
   *@
   @if (Model.Page.HasMore) {
-    @Widget.Link("Next", "/look-up", ("cursor", Model.Page.Cursor))
+    @Widget.Link("Next", Links.Pages.LookUp(), ("cursor", Model.Page.Cursor))
   }
 }
 @Widget.EndRoot()

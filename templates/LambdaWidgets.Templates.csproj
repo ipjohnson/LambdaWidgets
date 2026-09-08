@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      A template pack carries no assembly. PackageType Template is what makes `dotnet new install`
+      recognise it, and everything under content/ ships verbatim.
+    -->
+    <PropertyGroup>
+        <PackageId>LambdaWidgets.Templates</PackageId>
+        <PackageType>Template</PackageType>
+        <Title>CloudWatch custom widget templates</Title>
+        <Description>dotnet new templates for CloudWatch custom widgets: a Logs Insights search, a DynamoDB lookup, and a chart over CloudWatch metrics. Each produces a widget and a test project that drives it the way a viewer does.</Description>
+        <PackageTags>dotnet-new;templates;aws;cloudwatch;lambda;widget</PackageTags>
+        <TargetFramework>net8.0</TargetFramework>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <EnableDefaultItems>false</EnableDefaultItems>
+        <!-- NU5128: a template pack has no lib folder and needs none. -->
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+    </PropertyGroup>
+
+    <!--
+      PackagePath rather than ContentTargetFolders, which prepends content/ to a path that already
+      starts with it and ships every template at content/content/...
+    -->
+    <ItemGroup>
+        <None Include="content/**/*"
+              Exclude="content/**/bin/**;content/**/obj/**"
+              Pack="true"
+              PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
+        <Compile Remove="**/*" />
+    </ItemGroup>
+
+</Project>

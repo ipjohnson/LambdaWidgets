@@ -1,0 +1,13 @@
+@inherits WidgetName.WidgetNameAppWidgetTemplates<WidgetName.LookupPage>
+@Widget.Root()
+<form>
+  <label>Partition key</label>
+  <input name="partitionKey" value="@Model.PartitionKey" size="40">
+  <label>Sort key starts with</label>
+  <input name="sortPrefix" value="@Model.SortPrefix" size="40">
+</form>
+@* Every route comes from the generated Links. Rename LookUp in WidgetNameApp.cs and this line
+   fails to compile, rather than rendering a button that does nothing. *@
+@Widget.Button("Look up", Links.Pages.LookUp(), primary: true)
+<p>Table @Model.Table</p>
+@Widget.EndRoot()

@@ -1,0 +1,10 @@
+@inherits WidgetName.WidgetNameAppChartTemplates<WidgetName.GraphPage>
+@Widget.Root()
+@if (Model.Detail is not null) {
+  @Widget.Link("← Back", Links.Pages.Index())
+}
+@* Draw takes a nullable chart and writes nothing for null, so a page can leave one out without
+   a conditional around it. *@
+@Draw(Model.Over)
+@Draw(Model.Totals)
+@Widget.EndRoot()

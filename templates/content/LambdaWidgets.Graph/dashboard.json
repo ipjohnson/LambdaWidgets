@@ -1,0 +1,18 @@
+{
+  "widgets": [
+    {
+      "type": "custom",
+      "width": 24,
+      "height": 12,
+      "properties": {
+        "endpoint": "arn:aws:lambda:us-east-1:000000000000:function:customWidgetWidgetName",
+        "title": "Metrics",
+        "updateOn": {
+          "refresh": true,
+          "resize": false,
+          "timeRange": true
+        }
+      }
+    }
+  ]
+}

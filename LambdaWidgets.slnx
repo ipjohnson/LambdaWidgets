@@ -13,6 +13,9 @@
     <Project Path="samples/deploy/Deploy.csproj" />
     <Project Path="samples/Graph/Graph.csproj" />
   </Folder>
+  <Folder Name="/templates/">
+    <Project Path="templates/LambdaWidgets.Templates.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LambdaWidgets.Dashboard.Tests/LambdaWidgets.Dashboard.Tests.csproj" />
     <Project Path="tests/LambdaWidgets.Runtime.Tests/LambdaWidgets.Runtime.Tests.csproj" />
