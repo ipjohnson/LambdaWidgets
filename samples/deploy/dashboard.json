@@ -1,0 +1,29 @@
+{
+  "widgets": [
+    {
+      "type": "custom",
+      "width": 12,
+      "height": 10,
+      "properties": {
+        "endpoint": "arn:aws:lambda:us-east-1:000000000000:function:customWidgetLogsSearch",
+        "title": "Log search",
+        "updateOn": { "refresh": true, "resize": false, "timeRange": true },
+        "params": {
+          "logGroups": "/aws/lambda/customWidgetLogsSearch",
+          "query": "fields @timestamp, @message\n| sort @timestamp desc\n| limit 20",
+          "limit": 20
+        }
+      }
+    },
+    {
+      "type": "custom",
+      "width": 12,
+      "height": 10,
+      "properties": {
+        "endpoint": "arn:aws:lambda:us-east-1:000000000000:function:customWidgetEcho",
+        "title": "Echo",
+        "params": { "echo": "<h1>Hello world</h1>" }
+      }
+    }
+  ]
+}

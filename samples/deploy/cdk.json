@@ -1,0 +1,4 @@
+{
+  "app": "dotnet run --project Deploy.csproj --no-build",
+  "watch": { "include": ["**"], "exclude": ["bin/**", "obj/**"] }
+}

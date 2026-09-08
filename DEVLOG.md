@@ -402,3 +402,37 @@ package. Worth writing down only because the failure names a Hardened type and r
 package being broken.
 
 146 tests.
+
+## 2026-09-08 — The stack, and what a template test is for
+
+Item 7, the half that does not need an account. `samples/deploy` is a plain `Amazon.CDK.Lib` app:
+two widget functions on `provided.al2023`, a role each, the dashboard, and one managed policy a
+viewer's role attaches.
+
+Plain CDK because there is no Hardened construct on this line — `Hardened.Amz.Cdk` stopped at 0.22
+and depends on the Lambda host 0.30 replaced, so it cannot be taken beside it. Finding F-05. Writing
+it by hand also documents what the eventual construct has to cover, which is the more useful thing
+to hand upstream than a complaint.
+
+**The dashboard file is one artifact.** `dashboard.json` is what the harness renders locally and
+what gets deployed, with the placeholder endpoints substituted for the real ARNs. Authoring the
+deployed one separately would be two dashboards that drift, and the drift would be invisible until
+someone compared them.
+
+The tests assert on the synthesized template, which is the part of infrastructure worth testing: not
+that CDK works, but that the role is scoped, that the dashboard names the functions actually
+created, and that the runtime matches what the binary is. All three are things a reviewer cannot see
+at a glance and an account finds out expensively.
+
+`TheSearchWidgetsRoleAllowsOnlyTheQueriesItMakes` is the one that matters. The role is the whole of
+what the tool may do, and it is the argument the rationale document makes for widgets over scripts —
+a script runs with whatever its author's credentials allow. A test that only checked the widget
+*could* query would pass just as happily on `logs:*`.
+
+`Template.ToJSON()` answers a dictionary, and its `ToString()` is the type name — which parses as
+JSON exactly as well as it sounds, and cost three failing tests to notice.
+
+Mutation-checked: widening the role to `logs:*`, leaving the placeholder endpoints in the dashboard
+body, and swapping the native runtime for the managed one each fail exactly one test.
+
+155 tests. Day-one check 3, the probe, is what is left, and it needs an account.
