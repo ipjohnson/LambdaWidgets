@@ -9,13 +9,18 @@ namespace LambdaWidgets.Dashboard;
 /// <param name="Actions">Every <c>cwdb-action</c> in the response, in document order.</param>
 /// <param name="Forms">The widget's named fields and the values the function rendered them with.</param>
 /// <param name="Removals">What the sanitizer took out, which the console does silently.</param>
+/// <param name="Findings">
+/// Everything the linter found. Empty is the answer to want; the console reports none of these,
+/// so this is the only place an author learns about them.
+/// </param>
 public sealed record ShownWidget(
     ResponseKind Kind,
     string Html,
     string Styles,
     IReadOnlyList<WidgetAction> Actions,
     IReadOnlyDictionary<string, string> Forms,
-    IReadOnlyList<Removal> Removals);
+    IReadOnlyList<Removal> Removals,
+    IReadOnlyList<Finding> Findings);
 
 /// <summary>
 /// The CloudWatch console's side of a custom widget: what it sends, and what it shows.

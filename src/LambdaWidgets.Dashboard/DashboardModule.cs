@@ -39,6 +39,7 @@ public partial class DashboardModule : IServiceCollectionConfiguration {
         services.TryAddSingleton<IWidgetResponses, WidgetResponses>();
         services.TryAddSingleton<IWidgetEvents, WidgetEvents>();
         services.TryAddSingleton<IDashboardBodies, DashboardBodies>();
+        services.TryAddSingleton<IWidgetLinter, WidgetLinter>();
 
         services.TryAddSingleton<IWidgetConsole, WidgetConsole>();
     }

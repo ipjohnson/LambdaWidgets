@@ -1,6 +1,6 @@
 # HTTP API
 
-::: warning Not shipped yet
+::: warning Shipped
 Item 9 builds the API. See [status](/status).
 :::
 

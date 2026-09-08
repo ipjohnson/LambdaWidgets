@@ -13,6 +13,7 @@ public sealed class WidgetConsole : IWidgetConsole {
     private readonly IWidgetStyles _styles;
     private readonly IWidgetResponses _responses;
     private readonly IWidgetEvents _events;
+    private readonly IWidgetLinter _linter;
 
     public WidgetConsole(
         IWidgetActions actions,
@@ -20,13 +21,15 @@ public sealed class WidgetConsole : IWidgetConsole {
         IWidgetSanitizer sanitizer,
         IWidgetStyles styles,
         IWidgetResponses responses,
-        IWidgetEvents events) {
+        IWidgetEvents events,
+        IWidgetLinter linter) {
         _actions = actions;
         _forms = forms;
         _sanitizer = sanitizer;
         _styles = styles;
         _responses = responses;
         _events = events;
+        _linter = linter;
     }
 
     public WidgetEvent Opens(DashboardWidget widget, DashboardState state) =>
@@ -54,7 +57,10 @@ public sealed class WidgetConsole : IWidgetConsole {
                 Styles: "",
                 Actions: Array.Empty<WidgetAction>(),
                 Forms: new Dictionary<string, string>(),
-                Removals: Array.Empty<Removal>());
+                Removals: Array.Empty<Removal>(),
+                // Markdown and JSON are text. Linting them would report the markup inside a code
+                // block as a widget's mistake.
+                Findings: Array.Empty<Finding>());
         }
 
         var cleaned = _sanitizer.Clean(response.Content);
@@ -67,7 +73,10 @@ public sealed class WidgetConsole : IWidgetConsole {
             _styles.For(state.Theme, cleaned.Html),
             _actions.In(cleaned.Html),
             _forms.In(cleaned.Html),
-            cleaned.Removals);
+            cleaned.Removals,
+            // Linted from the raw answer rather than the cleaned one, because half the findings are
+            // about what the cleaning removed and there is nothing left of those afterwards.
+            _linter.Lint(response.Content));
     }
 
     public WidgetEvent Clicks(

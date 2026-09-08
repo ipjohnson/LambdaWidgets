@@ -466,3 +466,36 @@ cannot be unpublished and it is the one step with no way back.
 
 All four packages pack, verified rather than assumed, and the harness's tool manifest declares the
 `lambda-widgets` command.
+
+## 2026-09-08 — The linter and the API, and the last item that could be built
+
+Item 9. The linter reports the mistakes the console makes no noise about, and the HTTP API lets a
+widget author who is not writing C# drive a click-through.
+
+Every linter rule is a widget that renders and then does nothing, which is the worst failure a
+widget has because it looks finished. An `onclick` is the one an author hits first, since it is how
+every other page on the web responds to a click; the console strips it silently. An action with
+another element between it and its button binds nothing. A field with no name renders, gets typed
+into, and is the one thing the click does not carry.
+
+Findings travel with the shown widget rather than being fetched separately, so the inspector, the
+driver and the API all have them without asking. They are read from the raw answer rather than the
+sanitized one, because half of them are about what the sanitizing removed and there is nothing left
+of those afterwards.
+
+`AWellFormedWidgetHasNothingWrongWithIt` is the rule that keeps the rest honest. It lints the shape
+the Razor helpers emit, and a linter that reported anything there would be one nobody left switched
+on.
+
+The API's argument is narrow and worth stating: anyone can post JSON to a Lambda emulator. What
+nobody outside this repository can do is work out what the console would send for a click, or what
+it would have stripped before rendering. That is what these endpoints are for, and it is why they go
+through the same interpreter the page and the driver use rather than a second model of the console.
+
+Driven end to end with curl before claiming it: post a dashboard, open a widget, read back its
+forms, its actions and its findings, then click by index with what the viewer typed. The one thing
+the session showed that a test did not was the stand-in tool reading `query` from the top level and
+finding nothing — form values arrive under `widgetContext.forms.all`, and a fake that reads the
+wrong place is a fake being simplistic rather than a defect.
+
+172 tests. Every item in the plan that can be built without an AWS account is now built.

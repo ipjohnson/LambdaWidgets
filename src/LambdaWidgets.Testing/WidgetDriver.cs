@@ -89,7 +89,7 @@ public interface IWidgetDriver {
 internal sealed class WidgetDriver : IWidgetDriver {
     private static readonly ShownWidget Nothing = new(
         ResponseKind.Html, "", "", Array.Empty<WidgetAction>(),
-        new Dictionary<string, string>(), Array.Empty<Removal>());
+        new Dictionary<string, string>(), Array.Empty<Removal>(), Array.Empty<Finding>());
 
     private readonly LambdaInvocationHandler _handler;
     private readonly IWidgetConsole _console;
