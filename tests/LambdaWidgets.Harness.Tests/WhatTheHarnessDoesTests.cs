@@ -237,12 +237,60 @@ public class WhatTheHarnessDoesTests {
         Assert.Contains("AWS Lambda Test Tool", result.Body);
     }
 
-    private static IWidgetHarness Harness(RecordingTarget target, string body = Body) {
-        var console = new WidgetConsole(
-            new WidgetActions(), new WidgetForms(), new WidgetSanitizer(),
-            new WidgetStyles(), new WidgetResponses(), new WidgetEvents());
+    // ------------------------------------------------------------------ driving it from elsewhere
 
-        return new WidgetHarness(console, target, new DashboardBodies().Read(body));
+    /// <summary>
+    /// A test in another language posts its own dashboard rather than editing the file the page is
+    /// showing, so two tests running at once do not collide and neither disturbs the page a
+    /// developer has open.
+    /// </summary>
+    [Fact]
+    public void APostedDashboardIsItsOwn() {
+        var registry = Registry(new RecordingTarget("\"<p>ok</p>\""));
+
+        var first = registry.Add(Body);
+        var second = registry.Add(Body);
+
+        Assert.NotEqual(first, second);
+        Assert.NotSame(registry.Get(first), registry.Get(second));
+        Assert.NotSame(registry.Get(first), registry.Default);
+    }
+
+    /// <summary>The page and the API drive one dashboard, so what a test sets the page shows.</summary>
+    [Fact]
+    public void TheLoadedDashboardIsReachableByItsReservedId() {
+        var registry = Registry(new RecordingTarget("\"<p>ok</p>\""));
+
+        Assert.Same(registry.Default, registry.Get(HarnessRegistry.DefaultId));
+    }
+
+    /// <summary>
+    /// An unknown id is the caller's mistake, and the message says how to make one rather than
+    /// leaving them to guess at the shape of the API.
+    /// </summary>
+    [Fact]
+    public void AnUnknownDashboardSaysHowToMakeOne() {
+        var registry = Registry(new RecordingTarget("\"<p>ok</p>\""));
+
+        var refused = Assert.Throws<KeyNotFoundException>(() => registry.Get("nonesuch"));
+
+        Assert.Contains("POST /api/dashboards", refused.Message);
+    }
+
+    private static IHarnessRegistry Registry(RecordingTarget target) =>
+        new HarnessRegistry(Console_(), target, new DashboardBodies(), Harness(target));
+
+    private static IWidgetConsole Console_() {
+        var actions = new WidgetActions();
+        var sanitizer = new WidgetSanitizer();
+
+        return new WidgetConsole(
+            actions, new WidgetForms(), sanitizer, new WidgetStyles(),
+            new WidgetResponses(), new WidgetEvents(), new WidgetLinter(actions, sanitizer));
+    }
+
+    private static IWidgetHarness Harness(RecordingTarget target, string body = Body) {
+        return new WidgetHarness(Console_(), target, new DashboardBodies().Read(body));
     }
 
     /// <summary>A target that answers with whatever it was given, and remembers what it was sent.</summary>

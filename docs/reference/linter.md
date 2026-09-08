@@ -1,6 +1,6 @@
 # Linter findings
 
-::: warning Not shipped yet
+::: warning Shipped
 Item 9 builds the linter. See [status](/status).
 :::
 
