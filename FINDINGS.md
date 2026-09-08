@@ -330,8 +330,14 @@ touching `StartQueryRequest`, `GetQueryResultsRequest`, `QueryRequest` and `Invo
 published with `PublishAot` and `TrimmerSingleWarn=false` for `osx-arm64`. ILC emitted no `IL2xxx`
 or `IL3xxx` at all. The binary is 11.3 MB and runs.
 
-So the pins stay on 3.7 and 4.x is not needed. Recheck when the samples call these for real: this
-probe covers construction and request types, not response deserialization.
+So the pins stay on 3.7 and 4.x is not needed.
+
+**Rechecked for real 2026-09-08, and it holds.** The probe covered construction and request types
+rather than a working widget, and said so. `samples/LogsSearch` publishes `PublishAot` for
+`osx-arm64` with `TrimmerSingleWarn=false` and emits **no `IL2xxx` or `IL3xxx` at all** — a 17 MB
+binary carrying the Hardened runtime, the widget adapter, RazorBlade views and
+`AWSSDK.CloudWatchLogs` calling `StartQuery`, `GetQueryResults` and `StopQuery` with their responses
+deserialized. Nothing in the stack needs a trim hint.
 
 ## 2. The host seam   Answered 2026-09-06
 

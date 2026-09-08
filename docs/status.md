@@ -11,7 +11,7 @@ exists, so no page here has to hedge.
 | 2. `LambdaWidgets.Runtime`, the widget adapter, with the Echo sample | Done |
 | 3. Harness page, invoke proxy, test tool target, inspector | Done |
 | 4. `LambdaWidgets.Testing`, the click-through driver | Done |
-| 5. Logs Insights search sample | Not started |
+| 5. Logs Insights search sample | Done |
 | 6. DynamoDB lookup sample | Not started |
 | 7. Deploy the search sample and check it in a real dashboard | Not started |
 | 8. Native binaries, Docker image, dotnet tool, release workflow | Not started |
