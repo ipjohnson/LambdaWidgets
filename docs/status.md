@@ -9,7 +9,7 @@ exists, so no page here has to hedge.
 | 0b. Uptake of Hardened 0.30: one version line, the adapter seam | Done |
 | 1. `LambdaWidgets.Dashboard`, the interpreter | Done, less what the probe settles |
 | 2. `LambdaWidgets.Runtime`, the widget adapter, with the Echo sample | Done |
-| 3. Harness page, invoke proxy, test tool target, inspector | Not started |
+| 3. Harness page, invoke proxy, test tool target, inspector | Done |
 | 4. `LambdaWidgets.Testing`, the click-through driver | Not started |
 | 5. Logs Insights search sample | Not started |
 | 6. DynamoDB lookup sample | Not started |

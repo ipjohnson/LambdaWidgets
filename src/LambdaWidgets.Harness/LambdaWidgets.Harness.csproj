@@ -29,7 +29,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Hardened.Requests.Abstract" />
+        <PackageReference Include="Hardened.Shared.Runtime" />
+        <PackageReference Include="Hardened.Web.Runtime" />
         <PackageReference Include="Hardened.Web.Kestrel.Runtime" />
+        <PackageReference Include="DependencyModules.Runtime" />
         <PackageReference Include="Hardened.Web.StaticContent" />
         <PackageReference Include="Hardened.Templates.RazorBlade" />
         <PackageReference Include="RazorBlade" />

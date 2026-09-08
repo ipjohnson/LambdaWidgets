@@ -1,0 +1,36 @@
+@inherits LambdaWidgets.Harness.HarnessAppRazorTemplates<LambdaWidgets.Harness.WidgetPanel>
+@using LambdaWidgets.Dashboard
+<div class="widget" id="widget-@Model.Id" data-widget="@Model.Id">
+  <style>@Model.View.Shown.Styles</style>
+  @if (Model.View.Invoke.Failed) {
+    <div class="failed">
+      <strong>@Model.View.Invoke.FunctionError</strong>
+      <pre>@Model.View.Invoke.Body</pre>
+    </div>
+  }
+  else if (Model.View.Shown.Kind == ResponseKind.Html) {
+    <div class="rendered">@Html.Raw(Model.View.Shown.Html)</div>
+  }
+  else {
+    <pre class="rendered">@Model.View.Shown.Html</pre>
+  }
+  @*
+    The inspector, which the console does not have. What a widget author actually needs when a
+    button does nothing is the event that was sent and what the sanitizer removed, and neither is
+    visible on a real dashboard.
+  *@
+  <details class="inspector">
+    <summary>@Model.View.Shown.Actions.Count action(s), @Model.View.Shown.Removals.Count removed, @Model.View.Invoke.Duration.TotalMilliseconds.ToString("0") ms</summary>
+    <h4>Event sent</h4>
+    <pre>@Model.View.Event</pre>
+    @if (Model.View.Shown.Removals.Count > 0) {
+      <h4>Removed before rendering</h4>
+      <ul>@foreach (var removal in Model.View.Shown.Removals) {<li>@removal.ToString()</li>}</ul>
+    }
+    @foreach (var action in Model.View.Shown.Actions) {
+      @if (action.Faults.Count > 0) {
+        <p class="fault">Action @action.Index (@action.Text): @string.Join(", ", action.Faults)</p>
+      }
+    }
+  </details>
+</div>
