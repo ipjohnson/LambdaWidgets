@@ -8,6 +8,7 @@
   <Folder Name="/samples/">
     <Project Path="samples/Echo/Echo.csproj" />
     <Project Path="samples/LogsSearch/LogsSearch.csproj" />
+    <Project Path="samples/DynamoLookup/DynamoLookup.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LambdaWidgets.Dashboard.Tests/LambdaWidgets.Dashboard.Tests.csproj" />
@@ -15,6 +16,7 @@
     <Project Path="tests/LambdaWidgets.Harness.Tests/LambdaWidgets.Harness.Tests.csproj" />
     <Project Path="tests/Echo.Tests/Echo.Tests.csproj" />
     <Project Path="tests/LogsSearch.Tests/LogsSearch.Tests.csproj" />
+    <Project Path="tests/DynamoLookup.Tests/DynamoLookup.Tests.csproj" />
     <Project Path="tests/LambdaWidgets.Testing.Tests/LambdaWidgets.Testing.Tests.csproj" />
   </Folder>
 </Solution>

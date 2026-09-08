@@ -50,6 +50,22 @@
     </ItemGroup>
 
     <!--
+      The one exception to "one version line", and it has a reason rather than being a lapse.
+
+      Framework #305 dropped the DynamoDB client without a successor; #307 restored it as
+      Hardened.Aws.DynamoDbClient and that has not been released yet. The frozen 0.22 package
+      depends on Hardened.Shared.Runtime and nothing on the host seam #305 rebuilt, so it resolves
+      up to 0.30 and works - verified as an external consumer before the Dynamo sample was written,
+      not assumed. See FINDINGS.md F-06.
+
+      Replace both with Hardened.Aws.DynamoDbClient on the line after 0.30.0-rc1000, and delete this
+      block with them.
+    -->
+    <ItemGroup Label="Hardened.Amz, frozen">
+        <PackageVersion Include="Hardened.Amz.DynamoDbClient" Version="0.22.0-rc1000" />
+    </ItemGroup>
+
+    <!--
       DependencyModules is where [DependencyModule] and the generated PopulateServiceCollection
       come from, and Hardened's module system is built on it.
 

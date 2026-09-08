@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      A deployed widget is this assembly, and Program.cs is the entry point the Lambda runtime
+      starts. An executable, because the handler a deployment registers is the assembly name alone
+      and the runtime starts that only when the assembly has one.
+    -->
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>DynamoLookup</RootNamespace>
+        <AssemblyName>customWidgetDynamoLookup</AssemblyName>
+        <!-- Deployed AOT for provided.al2023, so anything it links has to publish clean. -->
+        <IsAotCompatible>true</IsAotCompatible>
+        <InvariantGlobalization>true</InvariantGlobalization>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AWSSDK.DynamoDBv2" />
+        <PackageReference Include="Hardened.Amz.DynamoDbClient" />
+        <PackageReference Include="Hardened.Shared.Runtime" />
+        <PackageReference Include="Hardened.Web.Runtime" />
+        <PackageReference Include="Hardened.Aws.Lambda.Runtime" />
+        <PackageReference Include="Hardened.Templates.RazorBlade" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+        <!-- Directly, because RazorBlade ships no buildTransitive: the .props that globs
+             **/*.cshtml never reaches a project that only references it through another
+             package, and the views below would silently not compile. -->
+        <PackageReference Include="RazorBlade" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DependencyModules.SourceGenerator" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" />
+        <PackageReference Include="Hardened.Web.SourceGenerator" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\LambdaWidgets.Runtime\LambdaWidgets.Runtime.csproj" />
+    </ItemGroup>
+
+</Project>

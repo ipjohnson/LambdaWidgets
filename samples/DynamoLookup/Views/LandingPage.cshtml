@@ -1,0 +1,11 @@
+@inherits DynamoLookup.DynamoLookupAppWidgetTemplates<DynamoLookup.LookupPage>
+@Widget.Root()
+<h3>@Model.Table</h3>
+<form>
+  <label>Partition key</label>
+  <input name="partitionKey" value="@Model.PartitionKey">
+  <label>Sort key starts with</label>
+  <input name="sortPrefix" value="@Model.SortPrefix">
+</form>
+@Widget.Button("Look up", "/look-up", primary: true)
+@Widget.EndRoot()

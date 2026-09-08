@@ -365,3 +365,40 @@ hint, which is the claim the AOT pin rests on and the first time it has been tru
 rather than a throwaway.
 
 134 tests.
+
+## 2026-09-08 — The lookup sample, and paging with nowhere to put state
+
+Item 6. A DynamoDB lookup by key, with a Next link.
+
+The sample exists for one line:
+
+    @Widget.Link("Next", "/look-up", ("cursor", Model.Page.Cursor))
+
+A widget gets no cookies, no local storage and no state between invocations, so where the viewer is
+up to is a property of the link they are about to click and of nothing else. Everything else in the
+sample is there to make that line meaningful — the cursor arrives in the request like any other
+value, leaves in the next action's fields, and is opaque to the widget in between.
+
+`ARefreshLosesThePageTheViewerWasOn` asserts the consequence rather than working around it. The
+console re-invokes with the configured parameters, and the cursor was never among them, so a refresh
+puts a paging widget back on page one. That is what the console does, and a paging widget has to be
+designed for it.
+
+The table is the dashboard author's and not the viewer's, deliberately. A widget whose table a
+viewer could change by clicking is a widget whose execution role has to allow every table, which is
+the opposite of what scoping a role is for. There is a test for that too, because it is the kind of
+thing a later refactor quietly loosens.
+
+**F-06's claim is now tested from outside.** #307 is merged and unreleased, so the sample takes
+`Hardened.Amz.DynamoDbClient` at 0.22 alongside the 0.30 pins — which is exactly what F-06 said
+would work. A throwaway consumer resolved `IDynamoDbClientProvider` from a container built by
+`[DynamoDbModule]` and got a working client, and the sample then published AOT with zero IL warnings
+carrying the frozen package and the 0.30 line in one binary. The one exception to "one version line"
+now has a verification behind it rather than an argument, and `Directory.Packages.props` says when
+to delete it.
+
+The first probe failed on a missing `IConfigurationManager`, which was my container and not the
+package. Worth writing down only because the failure names a Hardened type and reads like the
+package being broken.
+
+146 tests.
