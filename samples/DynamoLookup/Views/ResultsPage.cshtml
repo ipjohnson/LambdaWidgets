@@ -1,0 +1,29 @@
+@inherits DynamoLookup.DynamoLookupAppWidgetTemplates<DynamoLookup.LookupPage>
+@Widget.Root()
+<form>
+  <input name="partitionKey" value="@Model.PartitionKey">
+  <input name="sortPrefix" value="@Model.SortPrefix">
+</form>
+@Widget.Button("Look up", "/look-up", primary: true)
+@Widget.Link("Back", "/")
+@if (Model.Page is null || Model.Page.Items.Count == 0) {
+  <p>No items for @Model.PartitionKey.</p>
+} else {
+  <table>
+    <tr>@foreach (var field in Model.Page.Items[0].Fields) {<th>@field.Field</th>}</tr>
+    @foreach (var item in Model.Page.Items) {
+      <tr>@foreach (var field in item.Fields) {<td>@field.Value</td>}</tr>
+      @* The whole item in a popup: a widget is too narrow for a row worth reading. *@
+      @Widget.Popup(string.Join("<br>", item.Fields.Select(f => $"<b>{f.Field}</b> {System.Net.WebUtility.HtmlEncode(f.Value)}")))
+    }
+  </table>
+  @*
+    The next page, carried in the link's own fields. A widget has no session, so where the viewer
+    is up to is a property of the link they are about to click and of nothing else. This is the one
+    line the whole sample exists for.
+  *@
+  @if (Model.Page.HasMore) {
+    @Widget.Link("Next", "/look-up", ("cursor", Model.Page.Cursor))
+  }
+}
+@Widget.EndRoot()

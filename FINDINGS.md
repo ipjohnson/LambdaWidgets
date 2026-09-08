@@ -188,6 +188,13 @@ from `03e25e12^` rather than rewritten, renamed and otherwise unedited. All 24 o
 against 0.30 with the container tests included, which is the evidence that nothing about them needed
 rewriting and that the drop was a sweep.
 
+**And the interim works, verified rather than assumed   2026-09-08.** #307 is merged and its line
+has not shipped, so `samples/DynamoLookup` takes `Hardened.Amz.DynamoDbClient` at `0.22.0-rc1000`
+alongside the 0.30 pins. A throwaway consumer resolved `IDynamoDbClientProvider` from a container
+built by `[DynamoDbModule]` and got a working client; the sample then published `PublishAot` with
+zero `IL2xxx` or `IL3xxx`, carrying the frozen package and the 0.30 line in one binary. That is the
+claim this entry has rested on since it was written, now tested from outside.
+
     PR: Hardened.Framework #307, open. Ships on the line after 0.30.0-rc1000.
 
 ---
