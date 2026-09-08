@@ -332,3 +332,36 @@ Mutation-checked three ways: a refresh that keeps the viewer's edits, a decline 
 and a fill that accepts a field the widget does not have each fail exactly one test.
 
 121 tests across the solution.
+
+## 2026-09-08 — The search sample, and the AOT claim checked for real
+
+Item 5. A Logs Insights search as a widget: a form the viewer types into, the dashboard's range
+reaching a real query, an AWS SDK client under ahead-of-time compilation, and a call slow enough
+that the console waits on it.
+
+**The time range comes from the context, not from a field**, and that is the design decision the
+sample is really demonstrating. A widget beside a graph should search the window the viewer is
+looking at and follow them when they zoom it. Putting a time field on the form would be a second
+place for it to be wrong, and two tests hold it: one for the dashboard's range, one for a zoom
+narrowing the search.
+
+The polling sits behind `ILogQueries` rather than in the handler, because it is the SDK's shape and
+not the widget's — Logs Insights has no run-and-wait call. That is also the sample's demonstration
+of the shape a widget lives with: there is no second round trip to come back in, so the work happens
+inside the invocation or not at all, which is what the harness's 60-second proxy timeout was written
+for. A query abandoned when the invocation runs out of time is stopped, because one left running
+keeps scanning and keeps being billed for a widget nobody is looking at.
+
+The tests substitute at `ILogQueries` rather than at `IAmazonCloudWatchLogs`, deliberately. Mocking
+the SDK client would assert that the widget calls `StartQuery` and polls `GetQueryResults` the way
+the test imagines, which is implementation and free to change. Substituting the query records what a
+viewer's search actually asked for.
+
+**Day-one check 1's recheck is answered, and it holds.** The original probe covered construction and
+request types rather than a working widget, and said so. `samples/LogsSearch` publishes `PublishAot`
+with zero `IL2xxx` or `IL3xxx` — 17 MB carrying the Hardened runtime, the widget adapter, RazorBlade
+views and `AWSSDK.CloudWatchLogs` with its responses deserialized. Nothing in the stack needs a trim
+hint, which is the claim the AOT pin rests on and the first time it has been true of real code
+rather than a throwaway.
+
+134 tests.

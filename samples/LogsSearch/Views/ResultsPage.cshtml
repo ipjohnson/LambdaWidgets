@@ -1,0 +1,25 @@
+@inherits LogsSearch.LogsSearchAppWidgetTemplates<LogsSearch.SearchPage>
+@Widget.Root()
+<form>
+  <input name="logGroups" value="@Model.LogGroups" size="60">
+  <textarea name="query" rows="4">@Model.Query</textarea>
+</form>
+@Widget.Button("Run query", "/search", primary: true)
+@Widget.Link("Back", "/")
+@if (Model.Results is null || Model.Results.Rows.Count == 0) {
+  <p>No rows. Status @(Model.Results?.Status ?? "none").</p>
+} else {
+  <p>@Model.Results.Rows.Count row(s), @Model.Results.Scanned record(s) scanned.</p>
+  <table>
+    <tr>@foreach (var field in Model.Results.Rows[0].Fields) {<th>@field.Field</th>}</tr>
+    @foreach (var row in Model.Results.Rows) {
+      <tr>@foreach (var field in row.Fields) {<td>@field.Value</td>}</tr>
+      @*
+        The whole record in a popup, because a message wide enough to matter does not fit a widget
+        and the console gives no other way to see it.
+      *@
+      @Widget.Popup(string.Join("<br>", row.Fields.Select(f => $"<b>{f.Field}</b> {System.Net.WebUtility.HtmlEncode(f.Value)}")))
+    }
+  </table>
+}
+@Widget.EndRoot()

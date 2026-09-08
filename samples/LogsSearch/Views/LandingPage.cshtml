@@ -1,0 +1,12 @@
+@inherits LogsSearch.LogsSearchAppWidgetTemplates<LogsSearch.SearchPage>
+@Widget.Root()
+<form>
+  <label>Log groups</label>
+  <input name="logGroups" value="@Model.LogGroups" size="60">
+  <label>Query</label>
+  <textarea name="query" rows="4">@Model.Query</textarea>
+</form>
+@Widget.Button("Run query", "/search", primary: true)
+@Widget.Confirm("Reset", "Discard the edited query?", "/reset")
+<p>Searching @Model.Context.TimeRange.Effective.Start.ToString("u") to @Model.Context.TimeRange.Effective.End.ToString("u")</p>
+@Widget.EndRoot()
