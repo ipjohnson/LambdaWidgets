@@ -1,9 +1,5 @@
 # Testing a widget
 
-::: warning Shipped
-Item 4 builds `LambdaWidgets.Testing`. See [status](/status).
-:::
-
 A widget's tests are click-throughs. `LambdaWidgets.Testing` drives the application's generated
 `Invoke` in process, so a test needs neither the test tool nor the harness running.
 

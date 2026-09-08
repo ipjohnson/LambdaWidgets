@@ -3,6 +3,13 @@
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <IsPackable>true</IsPackable>
+        <!--
+          A test-only package is never in a published application, so nothing here would ever be
+          trimmed. It carries the flag anyway because the claim is true and free, and because it is
+          what turns a later reflection call in the driver into a build error rather than something
+          nobody finds out about.
+        -->
+        <IsAotCompatible>true</IsAotCompatible>
         <PackageId>LambdaWidgets.Testing</PackageId>
         <Description>A click-through test driver for widget applications. Drives the generated Invoke in-process; needs neither the test tool nor the harness.</Description>
     </PropertyGroup>

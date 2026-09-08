@@ -623,3 +623,46 @@ them, and the check packs locally and passes the local version. When the first t
 default becomes real and nothing else changes.
 
 189 tests here, 22 more in the projects the templates generate.
+
+## 2026-09-08  0.1.0-rc1000
+
+Six packages, five native binaries, a container image and a `dotnet tool`, off a `v*` tag.
+
+A prerelease, because everything here depends on Hardened.Framework `0.30.0-rc1000` and a stable
+version of this would be claiming more than the stack under it has.
+
+### Four things the rehearsal caught
+
+**The nuget.org push would never have run.** The step gated on `env.NUGET_API_KEY` and set that
+variable in its own `env:` block, which is not in scope for that step's `if`. A tag would have
+built everything, cut the GitHub release, and quietly published nothing. The secret is at job scope
+now.
+
+**Nothing built the image the README tells people to run.** `ghcr.io/ipjohnson/lambda-widgets` was
+in the README and in the harness guide, and no workflow produced it. There is a job for it now,
+using the built-in token, and it runs the image and curls it before the release is cut - the same
+check the native binaries already had.
+
+**Nothing checked the tool.** The harness ships as a native binary *and* a `dotnet tool`, packaged
+by two different steps. The binaries job proved its binary starts; the tool was never installed
+until it reached a user. It is installed and served in the packages job now.
+
+**`LambdaWidgets.Testing` was the one package not marked trimmable.** The other four set
+`IsAotCompatible`, and the packed assemblies carry the metadata - checked inside the nupkg rather
+than in the csproj. A test-only package is never in a published application, so the flag buys
+nothing today; it is on because the claim is true and it is what turns a later reflection call in
+the driver into a build error.
+
+### The hedges came off
+
+Four guide pages carried "not shipped yet" or "shipped" banners naming plan items that finished
+weeks ago, including one on `running-the-harness` that said "nothing on this page runs today".
+They are gone. The four that remain are all still true: deploying has not been run against a real
+account, the console's handling of a chart's `style` block and `cwdb-action` inside `svg` is
+unverified, `--aws` is not built, and the release line is a prerelease.
+
+Everything was rehearsed locally before the tag: six packages packed under
+`ContinuousIntegrationBuild`, the tool installed from the folder feed and served on 5086, the image
+built and served on 5087, and all three templates generated against the packed pack.
+
+189 tests here, 22 in the generated projects.

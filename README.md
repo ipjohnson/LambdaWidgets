@@ -5,7 +5,8 @@ developing them.
 
 **Documentation: <https://ipjohnson.github.io/LambdaWidgets>**
 
-> Nothing is on nuget.org yet, and the first release is what puts it there. See
+> On nuget.org at `0.1.0-rc1000`, a prerelease, because everything here depends on
+> Hardened.Framework `0.30.0-rc1000`. See
 > [status](https://ipjohnson.github.io/LambdaWidgets/status) for what exists. The
 > [console contract](https://ipjohnson.github.io/LambdaWidgets/reference/console-contract)
 > reference describes CloudWatch as it behaves today and is useful on its own.
@@ -66,7 +67,7 @@ as a container, or as a dotnet tool if you already have the SDK:
 
 ```bash
 docker run --rm -p 5080:5080 -v "$PWD/dashboard.json:/dashboard.json" ghcr.io/ipjohnson/lambda-widgets
-dotnet tool install --global LambdaWidgets.Harness
+dotnet tool install --global LambdaWidgets.Harness --prerelease
 ```
 
 Your widget can be written in anything. The harness talks the Lambda Invoke API, so it drives the

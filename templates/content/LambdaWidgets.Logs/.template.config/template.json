@@ -30,7 +30,7 @@
     "widgetsVersion": {
       "type": "parameter",
       "datatype": "string",
-      "defaultValue": "1.0.0",
+      "defaultValue": "0.1.0-rc1000",
       "replaces": "LAMBDAWIDGETS_VERSION",
       "description": "The LambdaWidgets version to reference."
     },

@@ -10,9 +10,9 @@ dotnet new lw-ddb   -n OrderLookup      # a DynamoDB query, paged
 dotnet new lw-graph -n OrderMetrics      # a chart over CloudWatch metrics
 ```
 
-::: warning Not on nuget.org yet
-Nothing here is published. Install from a clone instead — `dotnet new install ./templates` — and
-pass `--widgetsVersion` pointing at packages you packed yourself. See [status](/status).
+::: warning Prerelease
+Everything is on the `0.1.0-rc1000` line, so `dotnet new install` needs the version:
+`dotnet new install LambdaWidgets.Templates::0.1.0-rc1000`. See [status](/status).
 :::
 
 Each one produces two projects and a dashboard file:
@@ -38,7 +38,7 @@ lambda-widgets --dashboard dashboard.json  # the console's side, on http://local
 | `-n`, `--name` | `MyWidget` | The project name, the namespace, and the class prefix. |
 | `--tests` | `true` | `--tests false` leaves out the test project. |
 | `--hardenedVersion` | `0.30.0-rc1000` | The Hardened.Framework version to reference. |
-| `--widgetsVersion` | `1.0.0` | The LambdaWidgets version to reference. |
+| `--widgetsVersion` | `0.1.0-rc1000` | The LambdaWidgets version to reference. |
 
 The Lambda function name is `customWidget` followed by the project name, and it is also the
 assembly name. That is what a deployment registers as the handler, and what the widget's endpoint
