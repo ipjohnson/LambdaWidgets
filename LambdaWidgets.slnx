@@ -5,8 +5,12 @@
     <Project Path="src/LambdaWidgets.Runtime/LambdaWidgets.Runtime.csproj" />
     <Project Path="src/LambdaWidgets.Testing/LambdaWidgets.Testing.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Echo/Echo.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LambdaWidgets.Dashboard.Tests/LambdaWidgets.Dashboard.Tests.csproj" />
     <Project Path="tests/LambdaWidgets.Runtime.Tests/LambdaWidgets.Runtime.Tests.csproj" />
+    <Project Path="tests/Echo.Tests/Echo.Tests.csproj" />
   </Folder>
 </Solution>
