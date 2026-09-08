@@ -194,3 +194,43 @@ the third. Enrolling in the web profile would mean giving the request a cookie l
 carries, so the two that apply are written out in the test class instead. Finding F-09.
 
 39 tests: 12 requirements through the real `LambdaInvocationHandler`, 25 conformance, 2 written out.
+
+## 2026-09-08 — The Razor helpers, and a bug only the console would have found
+
+Item 2, second half, less describe and Echo. `Widget.Button`, `Link`, `Confirm`, `Detail`,
+`Action`, `Popup`, `Hover` and `Root` write the console's `cwdb-action` from a route the generated
+`Links` produced.
+
+**Plan section 5.4's `@inherits LambdaWidgets.Runtime.WidgetTemplate<ResultsPage>` was wrong.**
+Hardened generates a per-application view base from `[Enable<RazorTemplates>]`, and that generated
+base is what carries `Links`. A view inheriting the runtime's own base directly would get the
+helpers and no links, so every route in it would be a literal — exactly the failure the helpers
+exist to prevent. So `LambdaWidgets.Runtime` ships a `[TemplateBase]` marker of its own,
+`WidgetTemplates`, and a view inherits `LogsSearchWidgetTemplates<ResultsPage>`. A handler names its
+view with `[Output<Views.ResultsPage>]`, which the plan does not mention either.
+
+**A rendered view answered with something the console cannot read.** The Invoke API returns JSON and
+the console renders the string it finds. A handler returning a `string` or an object is serialized
+by the IO filter and is JSON already; a view is not — the template writes raw markup into the
+response body, and the adapter copied it straight out. Every template-based widget would have failed
+in the console and passed every test that read the body directly. The adapter now quotes a
+`text/html` response on the way out, which is the only place that can happen.
+
+That one is worth sitting with. It is not the kind of defect a unit test finds, because nothing
+local is wrong: the template renders correctly, the adapter copies correctly, and the two together
+produce an answer no caller can parse. What found it was rendering a real view through the real
+loop and looking at the bytes.
+
+The tests read the rendered widget back through `LambdaWidgets.Dashboard` rather than matching
+strings. That is the first place the two halves of the repository meet, and it is a better assertion
+than any string comparison: what the helpers emit has to be something the interpreter can find an
+action in, because the interpreter is where the console's behaviour is modelled.
+
+Two smaller things. `PrivateAssets="all"` on the RazorBlade reference makes its types internal to
+the consuming assembly, so a public helper returning `IEncodedContent` is `CS0050`; the framework's
+own `Hardened.Templates.RazorBlade` references it without `PrivateAssets` and says why in a comment.
+And the helper class was called `WidgetActions`, which collides with the interpreter's reader of the
+same name — it is `WidgetHelpers` now, and the interpreter keeps the better name.
+
+Mutation-checked: never quoting a view fails nine tests, hard-coding the endpoint fails one.
+49 tests.

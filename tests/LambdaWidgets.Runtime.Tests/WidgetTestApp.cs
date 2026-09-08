@@ -1,3 +1,4 @@
+using Hardened.Requests.Abstract.Attributes;
 using Hardened.Shared.Runtime.Attributes;
 using Hardened.Web.Runtime.Attributes;
 using LambdaWidgets.Runtime;
@@ -15,6 +16,7 @@ namespace LambdaWidgets.Runtime.Tests;
 /// </summary>
 [HardenedModule]
 [LambdaWidgetModule]
+[Enable<WidgetTemplates>]
 public partial class WidgetTestApp { }
 
 public class Pages {
@@ -35,6 +37,11 @@ public class Pages {
         $"<p>{context.DashboardName}|{context.Theme}|{context.WidgetId}|" +
         $"{context.TimeRange.Effective.Start:O}|{context.InvokedFunctionArn}</p>";
 
+    /// <summary>Renders a Razor view, which is how a real widget answers.</summary>
+    [Get("/page")]
+    [Output<Views.ResultsPage>]
+    public Results Page() => new() { Title = "Log search", Query = "fields @timestamp", Cursor = "c-2" };
+
     [Get("/boom")]
     public string Boom() => throw new InvalidOperationException("the widget was not ready");
 }
@@ -45,4 +52,13 @@ public class SearchRequest {
     public string Query { get; set; } = "";
 
     public int Limit { get; set; }
+}
+
+/// <summary>The model a Razor view renders, so the helpers can be driven through a real template.</summary>
+public class Results {
+    public string Title { get; set; } = "";
+
+    public string Query { get; set; } = "";
+
+    public string Cursor { get; set; } = "";
 }

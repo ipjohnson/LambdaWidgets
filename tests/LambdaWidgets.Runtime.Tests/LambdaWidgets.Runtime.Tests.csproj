@@ -22,7 +22,12 @@
         <PackageReference Include="Hardened.Requests.Testing" />
         <PackageReference Include="Hardened.Shared.Testing" />
         <PackageReference Include="Hardened.Shared.Testing.xUnit" />
+        <PackageReference Include="Hardened.Templates.RazorBlade" />
         <PackageReference Include="Hardened.Web.Runtime" />
+        <!-- Directly, because RazorBlade ships no buildTransitive: its .props globs
+             **/*.cshtml and never reaches a project that only references it through
+             another package. Without this the templates below silently do not compile. -->
+        <PackageReference Include="RazorBlade" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="xunit.v3" />
         <PackageReference Include="xunit.runner.visualstudio">
@@ -33,6 +38,12 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\LambdaWidgets.Runtime\LambdaWidgets.Runtime.csproj" />
+        <!--
+          The interpreter, so a rendered widget can be read back with the same code the harness and
+          the test driver use. This is the one place the two halves of the repository meet, and a
+          test that reads its own output with its own parser would prove nothing about that.
+        -->
+        <ProjectReference Include="..\..\src\LambdaWidgets.Dashboard\LambdaWidgets.Dashboard.csproj" />
     </ItemGroup>
 
 </Project>

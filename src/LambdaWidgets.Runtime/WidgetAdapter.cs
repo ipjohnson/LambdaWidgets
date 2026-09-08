@@ -66,12 +66,28 @@ public sealed class WidgetAdapter : IPayloadAdapter {
     public HostFailurePolicy FailurePolicy => HostFailurePolicy.Answer500;
 
     /// <summary>
-    /// The body, which for this family is the whole answer.
+    /// The body, as JSON, because that is what the caller of an Invoke reads.
     /// </summary>
     /// <remarks>
-    /// Copied across rather than written into. The body a response accumulates and the stream the
-    /// runtime sends back are two streams, and an adapter that does nothing here answers empty —
-    /// which is a defect <c>InvokeAdapter</c> shipped with and records in its own comment.
+    /// <para>
+    /// <b>A rendered view has to be quoted on the way out, and this is the only place that can
+    /// happen.</b> The console reads the Invoke response as JSON and renders the string it finds. A
+    /// handler returning a <c>string</c> or an object is serialized by the IO filter and arrives
+    /// here as JSON already; a handler returning a view is not — the template writes raw markup
+    /// straight into the body, and copying that through answers with HTML where JSON was expected.
+    /// Every template-based widget would fail in the console and work in every test that read the
+    /// body directly.
+    /// </para>
+    /// <para>
+    /// The content type is what tells the two apart, because it is the one thing the pipeline sets
+    /// differently: a view declares <c>text/html</c> through its <c>[TemplateContentType]</c> and a
+    /// serialized response declares <c>application/json</c>.
+    /// </para>
+    /// <para>
+    /// Copied rather than written into, in both branches. The body a response accumulates and the
+    /// stream the runtime sends back are two streams, and an adapter that does nothing here answers
+    /// empty — a defect <c>InvokeAdapter</c> shipped with and records in its own comment.
+    /// </para>
     /// </remarks>
     public async ValueTask WriteResponse(IExecutionContext context, Stream output) {
         var body = context.Response.Body;
@@ -80,8 +96,29 @@ public sealed class WidgetAdapter : IPayloadAdapter {
             body.Position = 0;
         }
 
-        await body.CopyToAsync(output);
+        if (!IsHtml(context.Response.ContentType)) {
+            await body.CopyToAsync(output);
+
+            return;
+        }
+
+        var rendered = new MemoryStream();
+
+        await body.CopyToAsync(rendered);
+
+        await using var writer = new Utf8JsonWriter(output);
+
+        // The markup is already UTF-8 and the writer wants UTF-8, so this escapes in place rather
+        // than round-tripping the page through a UTF-16 string.
+        writer.WriteStringValue(
+            rendered.TryGetBuffer(out var buffer) ? buffer.AsSpan() : rendered.ToArray());
+
+        await writer.FlushAsync();
     }
+
+    private static bool IsHtml(string? contentType) =>
+        contentType is not null &&
+        contentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
