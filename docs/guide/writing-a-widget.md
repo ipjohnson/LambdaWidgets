@@ -1,8 +1,8 @@
 # Writing a widget in C#
 
 ::: warning Not shipped yet
-Item 2 builds `LambdaWidgets.Runtime` and its generator. The code on this page is the shape being
-built to, not an API you can call. See [status](/status).
+Item 2 builds `LambdaWidgets.Runtime`. The code on this page is the shape being built to, not an
+API you can call. See [status](/status).
 :::
 
 A widget application is a [Hardened](https://github.com/ipjohnson/Hardened.Framework) application on

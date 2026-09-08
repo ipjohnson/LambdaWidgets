@@ -13,14 +13,32 @@
       out. A widget application is web-shaped on a third host, so the generated Routes and Links
       types, the template bases, validation and the route table are all available unchanged.
     -->
+    <!--
+      The generators that run over this assembly's own code. [LambdaWidgetModule] is a
+      [DependencyModule], and its two halves come from two packages: DependencyModules.SourceGenerator
+      emits the LambdaWidgetModuleAttribute an application applies, and Hardened.Library.SourceGenerator
+      emits PopulateServiceCollection. Both are developmentDependency, so neither flows to a
+      consumer of this package.
+
+      With only the Hardened one the module compiles and the attribute does not exist, which reads
+      as CS0616 "not an attribute class" at the application rather than as a missing reference here.
+      Day-one check 7.
+    -->
+    <ItemGroup>
+        <PackageReference Include="DependencyModules.SourceGenerator" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" />
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="Amazon.Lambda.Core" />
-        <PackageReference Include="Hardened.Amz.Shared.Lambda.Runtime" />
+        <PackageReference Include="DependencyModules.Runtime" />
+        <PackageReference Include="Hardened.Aws.Lambda.Runtime" />
         <PackageReference Include="Hardened.Requests.Abstract" />
         <PackageReference Include="Hardened.Requests.Runtime" />
         <PackageReference Include="Hardened.Shared.Runtime" />
         <PackageReference Include="Hardened.Templates.RazorBlade" />
         <PackageReference Include="Hardened.Web.Runtime" />
+        <PackageReference Include="Microsoft.Extensions.Primitives" />
     </ItemGroup>
 
 </Project>

@@ -8,8 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Hardened.Amz.Shared.Lambda.Testing" />
+        <PackageReference Include="Hardened.Aws.Lambda.Testing" />
+        <PackageReference Include="Hardened.Requests.Testing" />
         <PackageReference Include="Hardened.Shared.Testing" />
+        <PackageReference Include="Hardened.Web.Testing" />
         <ProjectReference Include="..\LambdaWidgets.Dashboard\LambdaWidgets.Dashboard.csproj" />
         <ProjectReference Include="..\LambdaWidgets.Runtime\LambdaWidgets.Runtime.csproj" />
     </ItemGroup>

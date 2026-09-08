@@ -6,8 +6,9 @@ exists, so no page here has to hedge.
 | Item | State |
 |---|---|
 | 0. Repository scaffold, package pins, tool manifest, CI | Done |
+| 0b. Uptake of Hardened 0.30: one version line, the adapter seam | Done |
 | 1. `LambdaWidgets.Dashboard`, the interpreter | Not started |
-| 2. `LambdaWidgets.Runtime` and `.SourceGenerator`, with the Echo sample | Not started |
+| 2. `LambdaWidgets.Runtime`, the widget adapter, with the Echo sample | Not started |
 | 3. Harness page, invoke proxy, test tool target, inspector | Not started |
 | 4. `LambdaWidgets.Testing`, the click-through driver | Not started |
 | 5. Logs Insights search sample | Not started |

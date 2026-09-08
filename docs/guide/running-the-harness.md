@@ -31,7 +31,18 @@ harness proxies every call server side, which also keeps credentials out of the 
 
 ## Starting a C# widget beside it
 
-Until Hardened.Amz 0.22.0-rc1000 ships, start the test tool by hand and point the widget at it:
+`dotnet run` is enough. A widget application's entry point asks `LambdaEmulator.StartIfLocal` for a
+session, which starts the AWS Lambda Test Tool as a child process, or attaches to one already
+listening, and points the bootstrap at it:
+
+```bash
+dotnet run --project samples/Echo
+```
+
+Reuse is what makes the debugger's stop button harmless. It kills the widget and not the tool, so
+the next start finds the tool listening and carries on.
+
+To drive the tool yourself instead, start it and set the address the service would have set:
 
 ```bash
 dotnet tool restore
@@ -41,5 +52,3 @@ dotnet lambda-test-tool start --lambda-emulator-port 5050 --no-launch-window
 ```bash
 AWS_LAMBDA_RUNTIME_API=localhost:5050/<AssemblyName> dotnet run --project samples/Echo
 ```
-
-From Amz 0.22.0-rc1000 the generated `Main` starts the tool itself and `dotnet run` is enough.

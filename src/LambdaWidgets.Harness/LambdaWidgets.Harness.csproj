@@ -17,6 +17,17 @@
         <Description>A console-shaped dashboard that runs on your machine, interprets cwdb-action clicks and forms, and invokes a custom widget through any Lambda Invoke API endpoint. Any language.</Description>
     </PropertyGroup>
 
+    <!--
+      The harness is a Hardened application, so the same generators any application carries:
+      the module and its attribute, and the route table, the Links type and the RazorBlade
+      template bases the page is written against.
+    -->
+    <ItemGroup>
+        <PackageReference Include="DependencyModules.SourceGenerator" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" />
+        <PackageReference Include="Hardened.Web.SourceGenerator" />
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="Hardened.Web.Kestrel.Runtime" />
         <PackageReference Include="Hardened.Web.StaticContent" />

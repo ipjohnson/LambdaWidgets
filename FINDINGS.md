@@ -1,7 +1,8 @@
 # Findings
 
-What was awkward, missing or broken in Hardened, Hardened.Amz, RazorBlade, DependencyModules or
-ValidationModules while building on them. Written when it happens, not reconstructed later. This log
+What was awkward, missing or broken in Hardened, RazorBlade, DependencyModules or ValidationModules
+while building on them. Findings before 2026-09-07 name Hardened.Amz, which was a repository of its
+own until Framework PR #305 consolidated it in. Written when it happens, not reconstructed later. This log
 is the deliverable of the exercise.
 
 A finding fixed upstream gets its PR link and the version that shipped it. A finding the maintainer
@@ -40,7 +41,9 @@ want of `ComponentModifier.Sealed`.
 does not wait on a release.
 
 **Worked around here:** pinned `2.0.0-preview1005` and wrote down why, in
-`Directory.Packages.props` and `AGENTS.md`.
+`Directory.Packages.props` and `AGENTS.md`. No longer carried: the 0.30 uptake deleted
+`LambdaWidgets.SourceGenerator`, so nothing here compiles the source-shipped package any more. The
+finding stands on its own, because it is about the package rather than about this repository.
 
     PR: none yet
 
@@ -48,28 +51,19 @@ does not wait on a release.
 
 ## F-02  Hardened.Amz has not released against Framework 0.22.0-rc1000   2026-09-06
 
-    Side: amz     Where it belongs: Hardened.Amz
+    Side: amz     Where it belongs: Hardened.Amz     Closed 2026-09-07
 
-Hardened.Framework is on `0.22.0-rc1000` on nuget.org. The newest Hardened.Amz there is
-`0.21.0-rc1000`.
+Hardened.Framework was on `0.22.0-rc1000` on nuget.org and the newest Hardened.Amz was
+`0.21.0-rc1000`, with the work merged on Amz `main` and unpublished. That forced the Framework pin
+back a line to match, and made the emulator change in #89 unavailable, so a widget sample could not
+start the test tool from its own `Main`.
 
-Amz `main` has merged the work already: `254ad508` takes the Framework 0.22.0 release (#90),
-`7c7e9534` starts the AWS Lambda Test Tool from the generated `Main` and drops the web harness
-(#89), and `ae7aab1e` sets the release's expected package count to 14 (#91). None of it is
-published.
+**Closed twice over.** Amz released `0.22.0-rc1000` on 2026-09-06, and Framework PR #305 then
+consolidated Amz into Hardened.Framework, so there is one version line and nothing left to keep in
+step. The by-hand test tool start is gone with it: `LambdaEmulator.StartIfLocal` starts the tool
+from the entry point.
 
-Two consequences for a new consumer. The Framework has to be pinned back to `0.21.0-rc1000` to match
-Amz, because Amz `0.21.0-rc1000` was compiled against it and a generator emitting calls against a
-contract from a different line is a compile error in generated code. And the emulator change in #89
-is unavailable, so a widget sample cannot start the test tool from its own `Main`; the tool has to
-be started by hand.
-
-**Fix:** release Amz `0.22.0-rc1000`.
-
-**Worked around here:** both pinned at `0.21.0-rc1000`, and the by-hand test tool start documented
-in `docs/guide/running-the-harness.md`.
-
-    PR: none yet
+    Fixed in: Hardened.Framework 0.30.0-rc1000 (#305)
 
 ---
 
@@ -105,7 +99,8 @@ set `<NoWarn>$(NoWarn);RS2008</NoWarn>` in `Hardened.SourceGenerator.targets` un
 `PackageHardenedIncludeSource` condition that includes the source.
 
 **Worked around here:** `NoWarn` for `RS2008` in `Directory.Build.props`, scoped to
-`*SourceGenerator*` projects.
+`*SourceGenerator*` projects. Removed in the 0.30 uptake along with the generator project. The
+finding stands: every consumer who compiles these packages in will write the same suppression.
 
     PR: none yet
 
@@ -136,6 +131,120 @@ framework's own source files, naming APIs they never wrote. That is the failure 
 
 **Fix:** document the set in the package README, or collapse it. `PackageHardenedIncludeSource` could
 imply the other three, since Hardened's source does not compile without them.
+
+**No longer carried here.** The 0.30 uptake deleted the generator project. Day-one check 2 had
+already answered the question it was written to answer, and the arrangement is unchanged upstream.
+
+    PR: none yet
+
+---
+
+## F-05  No CDK package on the 0.30 line   2026-09-07
+
+    Side: framework     Where it belongs: Hardened.Framework
+
+`Hardened.Amz.Cdk` `0.22.0-rc1000` is the newest, and there is no `Hardened.Aws.Cdk`. A consumer on
+0.30 has no supported way to deploy what it builds.
+
+It cannot be taken beside 0.30 either. Its nuspec depends on `Hardened.Amz.Shared.Lambda.Runtime`
+`0.22.0-rc1000`, so referencing it puts the old Lambda host in the same build as the new one, with
+`Hardened.Requests.Runtime` resolving up to 0.30 underneath an assembly compiled against 0.22. That
+is the version-skew failure F-02 was about, in the other direction.
+
+PR #305 names the replacement and its state in one line: "Nothing generates infrastructure yet -
+`AddEventSourcesFrom(HardenedRoutes.All)` on the CDK side is still to come."
+
+**Fix:** an `Hardened.Aws.Cdk` on the line, or a note on `/aws/cdk` saying what a 0.30 consumer
+should do instead.
+
+**Worked around here:** `samples/deploy` is written on `Amazon.CDK.Lib` directly. The function on
+`provided.al2023` with an executable handler, a role, a dashboard and a viewer policy is a page of
+plain CDK, and writing it by hand documents what the eventual construct has to cover.
+
+    PR: none yet
+
+---
+
+## F-06  The DynamoDB client and its test harness were dropped without a successor or a note   2026-09-07
+
+    Side: framework     Where it belongs: Hardened.Framework     Fixed 2026-09-07
+
+Two packages, `Hardened.Amz.DynamoDbClient` and `Hardened.Amz.DynamoDbClient.Testing`, frozen at
+`0.22.0-rc1000` and neither rebuilt at 0.30. `Hardened.Aws.Lambda.DynamoDb` is the Streams adapter
+rather than a client, and the shared name makes the gap easy to miss reading the package list.
+
+The testing one was the real loss. `[LocalDynamoDb]` puts DynamoDB Local in a container behind the
+application's own `IDynamoDbClientProvider`, with no test method changing, and nothing at any
+version replaced it.
+
+Neither package touched anything #305 rebuilt, which is what made the drop look incidental rather
+than decided. They bind `Hardened.Shared.Runtime` and `Hardened.Shared.Testing` and nothing on the
+host seam. The release notes do not mention them, and the pins they needed were still in the
+framework's own `Directory.Packages.props` with no project referencing them, beside `Amazon.CDK.Lib`
+and `Cdklabs.CdkMonitoringConstructs`, which are still orphaned there.
+
+**Fixed upstream.** Restored as `Hardened.Aws.DynamoDbClient` and `Hardened.Aws.DynamoDbClient.Testing`
+from `03e25e12^` rather than rewritten, renamed and otherwise unedited. All 24 of their tests pass
+against 0.30 with the container tests included, which is the evidence that nothing about them needed
+rewriting and that the drop was a sweep.
+
+    PR: Hardened.Framework #307, open. Ships on the line after 0.30.0-rc1000.
+
+---
+
+## F-07  InvokeAdapter.OperationField is declared and never read   2026-09-07
+
+    Side: framework     Where it belongs: Hardened.Framework
+
+`Hardened.Aws.Lambda.Invoke` declares:
+
+```csharp
+public const string OperationField = "operation";
+```
+
+with the clearest description in the codebase of how a multi-operation direct-invoke function
+selects a handler, citing the CloudWatch widget's own `route` field as the precedent. Nothing
+references it. `InvokeAdapter.CreateRequest` routes every payload to `"/" + context.FunctionName`
+unconditionally, so a direct-invoke function with several operations cannot address them.
+
+Either the field is read or the constant documents something the adapter does not do. The comment
+reads as a description of behaviour, which is what makes it worth an entry: it cost a reading of the
+adapter to find out otherwise.
+
+**Fix:** read the field in `CreateRequest`, or move the paragraph to wherever the mechanism is
+actually meant to live.
+
+**Consequence here:** none beyond the confusion. The widget adapter implements `route` itself, which
+was always the plan.
+
+    PR: none yet
+
+---
+
+## F-08  The documentation site describes the packages the release replaced, as current   2026-09-07
+
+    Side: framework     Where it belongs: Hardened.Framework
+
+Not one stale page. The 0.30 site's AWS section is written against the deleted line throughout, and
+every page below is in the nav:
+
+- `/aws/` opens with `using Hardened.Amz.Web.Lambda.Runtime.DependencyInjection;` and
+  `[LambdaWebModule]`, and its "Where things are" table links to `github.com/ipjohnson/Hardened.Amz`
+  paths that no longer exist.
+- `/reference/attributes` lists `[LambdaWebModule]`, `[LambdaFunctionModule]`, `[SqsLambda]`,
+  `[DynamoStreamLambda]`, `[HardenedCdk]` and more, each against its `Hardened.Amz.*` package.
+- `/reference/packages` inventories the Amz line and lists none of the eleven `Hardened.Aws.Lambda.*`
+  packages that replaced it.
+
+`/reference/repository` says the Amz line "stays on nuget.org at 0.22.0-rc1000 ... and the AWS pages
+describe it as released", so some of this is deliberate. It does not read that way from any of the
+pages: none says which version it describes, and `/aws/` is where an AWS reader lands first.
+
+**Fix:** a version banner on the AWS section, and the new package names in the examples on the pages
+that have successors.
+
+**Partly fixed:** Framework #307 moved the two DynamoDB pages onto the new names as part of
+restoring those packages. The Lambda pages are untouched.
 
     PR: none yet
 
@@ -169,9 +278,14 @@ passes.
 What it cost: findings F-01, F-03 and F-04. All three are about the arrangement being undocumented
 or unguarded, none about the code.
 
-Still to read for item 2: `WebLambdaSourceGenerator`, `ApplicationFileWriter`,
-`ApiGatewayEventProcessor`, `ApiGatewayV2ExecutionRequest` and `LambdaWebHost` in Amz, as the model
-for mapping a widget event onto an `IExecutionRequest`.
+**Superseded by the 0.30 uptake, answer intact.** `LambdaWidgets.SourceGenerator` is deleted:
+Hardened 0.30 makes the entry point a hand-written `Program.cs`, so there is nothing for a generator
+here to emit. The question this check asked was answered before that, and F-01, F-03 and F-04 are
+what it cost.
+
+The model to read for item 2 is now in Hardened.Framework rather than Amz: `IPayloadAdapter`,
+`ApiGatewayAdapter` for the request half, `InvokeAdapter` for the response half, and
+`LambdaInvocationHandler` for the loop that drives them.
 
 ## 3. The probe
 
@@ -198,6 +312,54 @@ describe markdown with a fenced `yaml` block.
 That settles section 6. No purpose-built tokenizer, and the harness page does not have to render
 markdown in the browser.
 
-## 6. Amz 0.22.0   Answered 2026-09-06
+## 6. Amz 0.22.0   Answered 2026-09-06, closed 2026-09-07
 
-**It has not shipped.** See F-02. The by-hand test tool start is the path until it does.
+**It shipped, and then the question stopped existing.** Amz released `0.22.0-rc1000` on 2026-09-06.
+Framework PR #305 then consolidated Amz into Hardened.Framework, so there is one version line. See
+F-02.
+
+## 7. A third-party IPayloadAdapter is discovered and run   Answered 2026-09-07
+
+**It works, outside the framework, from packages on nuget.org. Three things it cost.**
+
+A throwaway `net8.0` executable on the 0.30 packages: a `WidgetAdapter : IPayloadAdapter`, a
+`[DependencyModule] [LambdaRuntimeModule]` module registering it, an application applying that
+module, and a `[Get("/")]` handler. A widget-shaped payload was fed to
+`LambdaInvocationHandler.Invoke` with an `ILambdaContext` of its own. All four assertions pass:
+
+    PASS  adapter resolved from the container
+    PASS  Handles not called for a single adapter
+    PASS  route matched, handler ran
+    PASS  WriteResponse output reaches the caller
+
+Every framework type the adapter needs is public and reachable: `IPayloadAdapter`, `LambdaPayload`,
+`LambdaPayloadRequest`, `LambdaPayloadResponse`, `HostFailurePolicy`, `IExecutionContext`,
+`LambdaInvocationHandler` and `[LambdaRuntimeModule]`. The seam section 5 of the plan is built on
+holds.
+
+Three things the probe settled that reading had not:
+
+1. **Two generator packages, not one.** `Hardened.Library.SourceGenerator` emits
+   `PopulateServiceCollection` and does not emit a module's attribute.
+   `DependencyModules.SourceGenerator` 1.3.1 does. With only the first, the build fails at whoever
+   applies the module with `CS0616 'LambdaWidgetModule' is not an attribute class`, which names
+   neither the missing package nor the project missing it.
+
+2. **A widget application needs `[HardenedWebModule]`.** Plan section 5.1 shows `[HardenedModule]`
+   and `[LambdaWidgetModule]` alone, and that registers no route table: the invocation fails with
+   "This function declares no handlers." The framework's own `ApiGatewayTestApp` carries
+   `[HardenedWebModule]` for exactly this. Item 2 should compose it onto `[LambdaWidgetModule]`, the
+   way `LambdaRuntimeModule` composes `[HardenedRequestModule]`, so a widget application still
+   writes two attributes.
+
+3. **A handler returning a bare `string` is JSON-serialized on the way out.** The probe's answer was
+   `"\u003Ch1\u003Ehello\u003C/h1\u003E"` rather than the HTML. Section 5.3 already routes an
+   HTML response through a template or `IWidgetHtml`; this is the reason it has to.
+
+A throwaway application in a project outside the framework, with a module registering one
+`IPayloadAdapter` that returns a fixed string, invoked through `HardenedLambdaBootstrap` under the
+test tool. What it has to show: the adapter is resolved from the container, `Handles` is not called
+when it is the only one registered, what `WriteResponse` writes reaches the caller, and a web-shaped
+request built by hand matches a `[Get]` route.
+
+Everything in section 5 of the plan assumes all four.

@@ -9,9 +9,12 @@ viewer is allowed to invoke it.
 
 ## The function
 
-Publish AOT for `provided.al2023` and deploy the executable as the handler.
-`Hardened.Amz.Cdk` already does this for a Hardened Lambda, and `samples/deploy` is a C# CDK app
-built on it.
+Publish AOT for `provided.al2023` and deploy the executable as the handler. `samples/deploy` is a
+C# CDK app on `Amazon.CDK.Lib` that does it.
+
+There is no Hardened CDK package on the current line. `Hardened.Amz.Cdk` stopped at
+`0.22.0-rc1000` and depends on the Lambda host that Hardened 0.30 replaced, so it cannot be taken
+beside it. The stack here is plain CDK until a replacement ships.
 
 Name the function with the prefix `customWidget`. AWS recommends it so a dashboard author can tell
 which functions in an account are safe to add to a dashboard.
