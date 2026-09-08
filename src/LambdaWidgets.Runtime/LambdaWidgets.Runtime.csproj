@@ -37,6 +37,13 @@
         <PackageReference Include="Hardened.Requests.Runtime" />
         <PackageReference Include="Hardened.Shared.Runtime" />
         <PackageReference Include="Hardened.Templates.RazorBlade" />
+        <!--
+          Not PrivateAssets, matching Hardened.Templates.RazorBlade. RazorBlade's analyzer has to
+          run in the consuming application's compilation to turn its .cshtml into classes, so the
+          reference has to reach it. An application still references RazorBlade directly as well,
+          because RazorBlade ships no buildTransitive and its .props never arrives otherwise.
+        -->
+        <PackageReference Include="RazorBlade" />
         <PackageReference Include="Hardened.Web.Runtime" />
         <PackageReference Include="Microsoft.Extensions.Primitives" />
         <PackageReference Include="System.Text.Json" />
