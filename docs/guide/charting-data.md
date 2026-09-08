@@ -4,6 +4,7 @@
 chart library in the browser. The console strips `<script>`, so a chart has to arrive already drawn.
 
 ```csharp
+// GraphApp.cs
 [HardenedModule]
 [LambdaWidgetModule]
 [ChartsModule]
@@ -11,9 +12,24 @@ chart library in the browser. The console strips `<script>`, so a chart has to a
 public partial class GraphApp { }
 ```
 
-A view then has `@Draw` beside `@Widget` and `@Links`:
+A handler then builds charts and hands them over. Nothing in a widget writes SVG:
+
+```csharp
+// Pages.cs
+[Get("/")]
+[Output<Views.GraphPage>]
+public GraphPage Index(IWidgetContext context) {
+    var (start, end) = context.TimeRange.Effective;
+
+    return new GraphPage(
+        Chart.Over("Errors by kind", timeouts, throttled, serverErrors).In("per 5 min"));
+}
+```
+
+And the view has `@Draw` beside `@Widget` and `@Links`:
 
 ```razor
+@* Views/GraphPage.cshtml *@
 @inherits Graph.GraphAppChartTemplates<Graph.GraphPage>
 @Widget.Root()
 @Draw(Model.Requests)
@@ -21,8 +37,6 @@ A view then has `@Draw` beside `@Widget` and `@Links`:
 ```
 
 ## Describe the chart, do not draw it
-
-A handler builds a `Chart` and hands it over. Nothing in a widget writes SVG.
 
 ```csharp
 Chart.Over("Errors by kind",
