@@ -5,59 +5,62 @@
     </PropertyGroup>
 
     <!--
-      Hardened and Hardened.Amz move together at 0.21.0-rc1000, the last line both released.
+      One line, 0.30.0-rc1000.
 
-      Hardened.Framework is on 0.22.0-rc1000; Hardened.Amz is not. Amz main has merged the
-      Framework 0.22.0 uptake (#90) and the generated-Main test tool start (#89), but nothing is
-      on nuget.org past 0.21.0-rc1000, so taking the newer framework would pair Amz assemblies
-      with a framework they were never compiled against. Bump both together when Amz 0.22.0-rc1000
-      ships. See FINDINGS.md F-02.
+      Hardened.Amz is gone. Framework PR #305 consolidated four repositories into
+      Hardened.Framework and rebuilt the AWS packages on a new host seam, so there is no second
+      line to keep in step and no pin to hold back. The Amz packages stay on nuget.org at
+      0.22.0-rc1000, frozen; nothing here takes one.
 
       Nothing here floats. Central package management rejects floating versions by default
       (NU1011) and that default is left in place.
     -->
     <ItemGroup Label="Hardened.Framework">
-        <PackageVersion Include="Hardened.Library.SourceGenerator" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Requests.Abstract" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Requests.Runtime" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Shared.Runtime" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Shared.Testing" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Shared.Testing.xUnit" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.SourceGenerator" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Templates.RazorBlade" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Web.Kestrel.Runtime" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Web.Runtime" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Web.SourceGenerator" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Web.StaticContent" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Web.Testing" Version="0.21.0-rc1000" />
-    </ItemGroup>
-
-    <ItemGroup Label="Hardened.Amz">
-        <PackageVersion Include="Hardened.Amz.Cdk" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Amz.DynamoDbClient" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Amz.Shared.Lambda.Runtime" Version="0.21.0-rc1000" />
-        <PackageVersion Include="Hardened.Amz.Shared.Lambda.Testing" Version="0.21.0-rc1000" />
+        <PackageVersion Include="Hardened.Library.SourceGenerator" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Requests.Abstract" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Requests.Runtime" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Requests.Testing" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Shared.Runtime" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Shared.Testing" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Shared.Testing.xUnit" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Templates.RazorBlade" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Web.Kestrel.Runtime" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Web.Runtime" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Web.SourceGenerator" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Web.StaticContent" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Web.Testing" Version="0.30.0-rc1000" />
     </ItemGroup>
 
     <!--
-      CSharpAuthor must be exactly what Hardened.Framework builds its generators against.
+      The Lambda host and the adapter seam a widget plugs into. LambdaWidgets.Runtime ships an
+      IPayloadAdapter and the module that registers it; the host owns the invocation loop and
+      brings the request pipeline with it.
 
-      Hardened.SourceGenerator ships as source and is compiled into LambdaWidgets.SourceGenerator,
-      so its use of CSharpAuthor is compiled here too, and PrivateAssets=all on the framework side
-      means no dependency constraint arrives to say which version. The package's own HARDENED001
-      guard demands 2.0.0 or later but skips any prerelease pin - and 2.0.0 final does not exist,
-      so the guard cannot check the only version that works. See FINDINGS.md F-01.
+      No adapter package from the framework. Hardened.Aws.Lambda.ApiGateway and the rest each serve
+      a trigger this repository does not have, and the Hardened.Aws.Lambda meta package would put
+      every Amazon event assembly in a widget's deployment bundle to reach none of them.
 
-      ValidationModules.SourceGenerator.Impl moves with it: its emitters need CSharpAuthor 2.0's
-      Roslyn bridge, which the generator project opts into.
+      Hardened.Aws.DynamoDbClient and .Testing arrive on the next line, restored from the Amz
+      history by Framework #307. The Dynamo sample is item 6, so nothing is pinned for them until a
+      project references one.
+    -->
+    <ItemGroup Label="Hardened.Aws">
+        <PackageVersion Include="Hardened.Aws.Lambda.Runtime" Version="0.30.0-rc1000" />
+        <PackageVersion Include="Hardened.Aws.Lambda.Testing" Version="0.30.0-rc1000" />
+    </ItemGroup>
+
+    <!--
+      DependencyModules is where [DependencyModule] and the generated PopulateServiceCollection
+      come from, and Hardened's module system is built on it.
+
+      Hardened.DependencyModules.SourceGenerator is not referenced and must not be. It is not
+      packable on the 0.30 line: it reaches a consumer inside Hardened.Library.SourceGenerator,
+      which packs its DLL into its own analyzers/dotnet/cs. The 0.1.0-rc1 still on nuget.org is
+      four release lines behind and is not the same generator.
     -->
     <ItemGroup Label="Code generation">
-        <PackageVersion Include="CSharpAuthor" Version="2.0.0-preview1005" />
         <PackageVersion Include="DependencyModules.Runtime" Version="1.3.1" />
         <PackageVersion Include="DependencyModules.SourceGenerator" Version="1.3.1" />
-        <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
-        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
-        <PackageVersion Include="ValidationModules.SourceGenerator.Impl" Version="1.0.0" />
     </ItemGroup>
 
     <!--
@@ -74,14 +77,16 @@
     </ItemGroup>
 
     <!--
-      The 3.7 line, pinned, matching the AWSSDK.DynamoDBv2 that Hardened.Amz pins. Day-one check 1
-      publishes these under PublishAot and records the warnings; 4.x is the fallback if 3.7 warns.
-      Pinned rather than floating so the same commit resolves the same SDK on a rebuild.
+      The 3.7 line, pinned. Day-one check 1 published all three under PublishAot with no trim or
+      AOT warning at all, so 4.x is not needed. Pinned rather than floating so the same commit
+      resolves the same SDK on a rebuild.
+
+      Amazon.Lambda.Core is here because the adapter takes an ILambdaContext. RuntimeSupport is
+      not: HardenedLambdaBootstrap owns the invocation loop and brings it. A serializer package is
+      not needed at all now that an adapter binds its own payload.
     -->
     <ItemGroup Label="AWS">
         <PackageVersion Include="Amazon.Lambda.Core" Version="3.3.0" />
-        <PackageVersion Include="Amazon.Lambda.RuntimeSupport" Version="2.2.0" />
-        <PackageVersion Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.3" />
         <PackageVersion Include="Amazon.CDK.Lib" Version="2.263.0" />
         <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="3.7.509.3" />
         <PackageVersion Include="AWSSDK.DynamoDBv2" Version="3.7.513.4" />
@@ -94,7 +99,6 @@
         <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.1" />
         <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
         <PackageVersion Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
-        <PackageVersion Include="System.Memory" Version="4.5.5" />
         <PackageVersion Include="System.Text.Json" Version="8.0.5" />
     </ItemGroup>
 
