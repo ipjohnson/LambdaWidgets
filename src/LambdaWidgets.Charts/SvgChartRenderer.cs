@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using DependencyModules.Runtime.Attributes;
 
 namespace LambdaWidgets.Charts;
@@ -602,8 +603,14 @@ public sealed class SvgChartRenderer : IChartRenderer {
 
     private static string Text(string value) => WebUtility.HtmlEncode(value);
 
+    /// <remarks>
+    /// <c>JsonEncodedText</c> rather than <c>JsonSerializer.Serialize</c>: the serializer's generic
+    /// overload carries <c>RequiresDynamicCode</c> and <c>RequiresUnreferencedCode</c>, which a
+    /// widget publishing ahead-of-time reports as IL3050 and IL2026. This escapes the same way and
+    /// needs no reflection at all.
+    /// </remarks>
     private static string Quote(string value) =>
-        System.Text.Json.JsonSerializer.Serialize(value);
+        $"\"{JsonEncodedText.Encode(value)}\"";
 
     private static string N(double value) =>
         Math.Round(value, 2).ToString(CultureInfo.InvariantCulture);
