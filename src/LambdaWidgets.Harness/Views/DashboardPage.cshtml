@@ -1,0 +1,20 @@
+@inherits LambdaWidgets.Harness.HarnessAppRazorTemplates<LambdaWidgets.Harness.DashboardPage>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>lambda-widgets</title>
+  <link rel="stylesheet" href="/harness.css">
+</head>
+<body class="@(Model.Harness.State.Theme == LambdaWidgets.Dashboard.Theme.Dark ? "dark" : "light")">
+<header>
+  <strong>lambda-widgets</strong>
+  <span>@Model.Harness.Dashboard.Widgets.Count widget(s)</span>
+</header>
+<main id="dashboard">
+  @foreach (var widget in Model.Harness.Dashboard.Widgets) {
+    <section class="slot" data-widget="@widget.Id" data-title="@widget.Title"></section>
+  }
+</main>
+<script src="/harness.js"></script>
+</body>
+</html>

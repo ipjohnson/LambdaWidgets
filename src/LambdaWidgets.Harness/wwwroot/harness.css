@@ -1,0 +1,17 @@
+/* The console's own look, near enough that a widget developed here looks the same deployed. */
+:root { --ground: #f2f3f3; --panel: #fff; --ink: #16191f; --line: #d5dbdb; --accent: #0073bb; }
+body.dark { --ground: #16191f; --panel: #21252c; --ink: #d5dbdb; --line: #414750; --accent: #44b9d6; }
+body { margin: 0; background: var(--ground); color: var(--ink);
+       font: 14px "Amazon Ember", "Helvetica Neue", Arial, sans-serif; }
+header { display: flex; gap: 16px; align-items: baseline;
+         padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+main { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+       gap: 16px; padding: 16px; }
+.widget { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 12px; }
+.rendered { min-height: 60px; }
+.failed { border-left: 3px solid #d13212; padding-left: 10px; }
+.failed pre { white-space: pre-wrap; }
+.inspector { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 12px; }
+.inspector summary { cursor: pointer; color: var(--accent); }
+.inspector pre { overflow-x: auto; background: var(--ground); padding: 8px; }
+.fault { color: #d13212; }

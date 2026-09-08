@@ -266,3 +266,40 @@ assert it is `DescribeDoesNotRunTheWidget`, with an echoed value the documentati
 contain.
 
 Mutation-checked: never short-circuiting describe fails three tests. 93 tests across the solution.
+## 2026-09-08 — The harness, and the first thing anyone can look at
+
+Item 3. `lambda-widgets` is a Hardened Kestrel application that loads a dashboard file, invokes each
+widget through the Invoke API, and renders what comes back through the same `IWidgetConsole` the
+test driver will resolve.
+
+The shape that matters: **the page holds no rules.** Its JavaScript reports which bound element was
+clicked and what is in the form fields, and nothing else. Which action that was, what the event
+carries, what the console would have stripped — all server side, in the interpreter. A page that
+decided any of it would be a second implementation of the console and the two would drift, which is
+the failure section 6 exists to prevent.
+
+The inspector is the part the console does not have and the reason to develop here at all. A widget
+author whose button does nothing gets, on a real dashboard, a button that does nothing. Here they
+get the event that was sent, what the sanitizer removed, the actions it found with their faults, and
+how long the invoke took.
+
+Ran it rather than assuming it, which caught the one wiring mistake: `[HardenedWebModule]` brings
+the routing table and the request pipeline but not a host, so the application started and answered
+every request with "No service for type IHttpApplication". `[KestrelRuntime]` is the module that
+registers the host, and it composes the web module itself. The first request after that rendered a
+widget, stripped a `<script>`, reported the removal and showed the event — which is the whole of
+item 3 in one response.
+
+Mutation testing paid again, and differently this time. Two of three mutations failed a test as
+expected; the third, ignoring `X-Amz-Function-Error` entirely, passed everything. The test that was
+supposed to cover it used the invoker double, which sets the error itself and never reads a header.
+Two tests now drive `WidgetInvoker` against real HTTP responses. That is the second time a double
+has made a test look like it covered something it never touched.
+
+14 tests here, 107 across the solution.
+
+The CI-flags build then failed with fifteen `xUnit1051`, which Hardened's own AGENTS.md warns about
+by name: an optional `CancellationToken` on a shared test helper is a warning locally and an error
+under `ContinuousIntegrationBuild`, so it lands at every call site at once and only in CI. Passing
+`TestContext.Current.CancellationToken` rather than `default` is the fix. Reading someone else's
+AGENTS.md before writing the tests would have been cheaper than reading it afterwards.

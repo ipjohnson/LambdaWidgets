@@ -1,7 +1,8 @@
 # Invoke targets
 
-::: warning Not shipped yet
-Item 3 builds the proxy and the first target. See [status](/status).
+::: warning Partly shipped
+The proxy, `--test-tool`, `--rie`, `--sam` and `--function` are built. `--aws` is not: it needs the
+SDK path rather than the Invoke API over HTTP. See [status](/status).
 :::
 
 The function name in a `cwdb-action` endpoint, the segment after `function:`, selects where the
