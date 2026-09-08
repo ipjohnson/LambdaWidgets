@@ -105,6 +105,7 @@ jobs:
           for project in \
             src/LambdaWidgets.Dashboard/LambdaWidgets.Dashboard.csproj \
             src/LambdaWidgets.Runtime/LambdaWidgets.Runtime.csproj \
+            src/LambdaWidgets.Charts/LambdaWidgets.Charts.csproj \
             src/LambdaWidgets.Testing/LambdaWidgets.Testing.csproj \
             src/LambdaWidgets.Harness/LambdaWidgets.Harness.csproj
           do
@@ -114,13 +115,13 @@ jobs:
               --output packages
           done
 
-      # Four, and the count is a literal on purpose. A project that stops packing - IsPackable
+      # Five, and the count is a literal on purpose. A project that stops packing - IsPackable
       # flipped, a rename - otherwise ships a release short one package and says nothing.
-      - name: Four packages
+      - name: Five packages
         run: |
           COUNT=$(ls packages/*.nupkg | wc -l)
-          if [ "$COUNT" -ne 4 ]; then
-            echo "::error::Packed $COUNT packages, expected 4. Update this workflow if one was added or removed."
+          if [ "$COUNT" -ne 5 ]; then
+            echo "::error::Packed $COUNT packages, expected 5. Update this workflow if one was added or removed."
             ls packages/
             exit 1
           fi

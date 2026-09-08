@@ -16,6 +16,7 @@ exists, so no page here has to hedge.
 | 7. Deploy the search sample and check it in a real dashboard | Stack written; the dashboard check needs an account |
 | 8. Native binaries, Docker image, dotnet tool, release workflow | Done, untagged |
 | 9. HTTP API for tests in other languages, and the linter | Done |
+| 10. `LambdaWidgets.Charts`, SVG charts with a hover layer | Done |
 
 ## What is already true
 

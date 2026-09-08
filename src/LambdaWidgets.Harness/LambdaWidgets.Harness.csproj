@@ -22,6 +22,16 @@
       the module and its attribute, and the route table, the Links type and the RazorBlade
       template bases the page is written against.
     -->
+    <!--
+      The page's stylesheet and script, beside the binary. Without this they are compiled into
+      nothing and never copied, so every request for them is a 404 - the page renders its shell,
+      no script runs, and the widgets never appear. A curl against /widgets/{id} still passes,
+      which is what makes it easy to miss.
+    -->
+    <ItemGroup>
+        <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="DependencyModules.SourceGenerator" />
         <PackageReference Include="Hardened.Library.SourceGenerator" />

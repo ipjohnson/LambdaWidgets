@@ -1,14 +1,11 @@
 # HTTP API
 
-::: warning Shipped
-Item 9 builds the API. See [status](/status).
-:::
-
 The harness exposes its interpreter over HTTP, so a click-through test can be written in any
 language with nothing but an HTTP client.
 
 ```
-POST /api/dashboards                                       body: dashboard JSON     -> { id }
+POST /api/dashboards                                       body: dashboard JSON, as a JSON string
+                                                           -> { id }
 PUT  /api/dashboards/{id}/state                            body: time range, theme, period, ...
 GET  /api/dashboards/{id}/widgets/{wid}                    -> { html, display, event, raw, findings }
 GET  /api/dashboards/{id}/widgets/{wid}/actions            -> [ { index, text, action, display, confirmation, event } ]
@@ -16,6 +13,15 @@ POST /api/dashboards/{id}/widgets/{wid}/actions/{index}    body: { forms: { name
                                                            -> { html, display, event, raw, findings }
 POST /api/dashboards/{id}/refresh                          re-invokes per updateOn
 POST /api/lint                                             body: html               -> findings
+```
+
+The dashboard goes up as a JSON **string** rather than as an object, so the harness stores exactly
+the bytes a `--dashboard` file would have held and parses them the same way:
+
+```
+curl -X POST http://localhost:5080/api/dashboards \
+     -H 'Content-Type: application/json' \
+     -d "$(jq -Rs . < dashboard.json)"
 ```
 
 A test loads a dashboard, sets the state it wants, reads the widget, finds the action it means to

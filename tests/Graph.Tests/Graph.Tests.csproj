@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Hardened.Shared.Testing" />
+        <PackageReference Include="Hardened.Shared.Testing.xUnit" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit.v3" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\samples\Graph\Graph.csproj" />
+        <!--
+          The click-through driver, which brings the interpreter with it. A chart is asserted on as
+          the console would read it, rather than as the string the renderer happened to build.
+        -->
+        <ProjectReference Include="..\..\src\LambdaWidgets.Testing\LambdaWidgets.Testing.csproj" />
+    </ItemGroup>
+
+</Project>

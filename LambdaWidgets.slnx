@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/LambdaWidgets.Dashboard/LambdaWidgets.Dashboard.csproj" />
+    <Project Path="src/LambdaWidgets.Charts/LambdaWidgets.Charts.csproj" />
     <Project Path="src/LambdaWidgets.Harness/LambdaWidgets.Harness.csproj" />
     <Project Path="src/LambdaWidgets.Runtime/LambdaWidgets.Runtime.csproj" />
     <Project Path="src/LambdaWidgets.Testing/LambdaWidgets.Testing.csproj" />
@@ -10,6 +11,7 @@
     <Project Path="samples/LogsSearch/LogsSearch.csproj" />
     <Project Path="samples/DynamoLookup/DynamoLookup.csproj" />
     <Project Path="samples/deploy/Deploy.csproj" />
+    <Project Path="samples/Graph/Graph.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LambdaWidgets.Dashboard.Tests/LambdaWidgets.Dashboard.Tests.csproj" />
@@ -20,5 +22,6 @@
     <Project Path="tests/DynamoLookup.Tests/DynamoLookup.Tests.csproj" />
     <Project Path="tests/Deploy.Tests/Deploy.Tests.csproj" />
     <Project Path="tests/LambdaWidgets.Testing.Tests/LambdaWidgets.Testing.Tests.csproj" />
+    <Project Path="tests/Graph.Tests/Graph.Tests.csproj" />
   </Folder>
 </Solution>
