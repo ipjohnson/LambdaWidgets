@@ -7,5 +7,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LambdaWidgets.Dashboard.Tests/LambdaWidgets.Dashboard.Tests.csproj" />
+    <Project Path="tests/LambdaWidgets.Runtime.Tests/LambdaWidgets.Runtime.Tests.csproj" />
   </Folder>
 </Solution>

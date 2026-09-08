@@ -1,0 +1,198 @@
+using System.Text;
+using System.Text.Json;
+using Amazon.Lambda.Core;
+using Hardened.Aws.Lambda.Runtime.Hosting;
+using Hardened.Shared.Testing.Attributes;
+using Xunit;
+
+namespace LambdaWidgets.Runtime.Tests;
+
+/// <summary>
+/// What the console gets back, given what it sent.
+///
+/// <para>
+/// Through <c>LambdaInvocationHandler</c>, which is the loop a deployed widget runs under: the
+/// adapter is selected, the request is built, dispatch matches a route, the handler runs and the
+/// adapter writes the answer. A test that called the adapter directly would prove the adapter
+/// agrees with itself and say nothing about whether a widget works.
+/// </para>
+/// </summary>
+public class WhatAWidgetInvocationDoesTests {
+
+    // ------------------------------------------------------------------ routing
+
+    [HardenedTest]
+    public async Task AnEventWithNoRouteReachesTheLandingPage(LambdaInvocationHandler handler) {
+        Assert.Equal("<h1>Log search</h1>", await Invoke(handler, """{"widgetContext":{}}"""));
+    }
+
+    /// <summary>
+    /// The reserved field the framework documents for the same job on
+    /// <c>InvokeAdapter.OperationField</c>: one function, many operations, selected by a field the
+    /// caller sets.
+    /// </summary>
+    [HardenedTest]
+    public async Task TheRouteFieldSelectsTheHandler(LambdaInvocationHandler handler) {
+        Assert.Contains("|", await Invoke(handler, """{"route":"/search","widgetContext":{}}"""));
+    }
+
+    /// <summary>
+    /// A route written without its leading slash is the author's slip rather than a different
+    /// route, and repairing it beats a 404 naming a path they believe they wrote.
+    /// </summary>
+    [HardenedTest]
+    public async Task ARouteWithoutItsLeadingSlashStillMatches(LambdaInvocationHandler handler) {
+        Assert.Contains("|", await Invoke(handler, """{"route":"search","widgetContext":{}}"""));
+    }
+
+    /// <summary>
+    /// Path parameters work, which is what lets a template say <c>Links.Rows.Row(id)</c> rather
+    /// than build a string.
+    /// </summary>
+    [HardenedTest]
+    public async Task ARouteWithAPathParameterBindsIt(LambdaInvocationHandler handler) {
+        Assert.Equal("<p>row 42</p>",
+            await Invoke(handler, """{"route":"/rows/42","widgetContext":{}}"""));
+    }
+
+    // ------------------------------------------------------------------ binding
+
+    [HardenedTest]
+    public async Task AWidgetsConfiguredParametersReachTheHandler(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """
+            {"route":"/search",
+             "widgetContext":{"params":{"logGroups":"/aws/lambda/orders","limit":20}}}
+            """);
+
+        Assert.Equal("<p>/aws/lambda/orders||20</p>", answer);
+    }
+
+    /// <summary>
+    /// What an action sent beats how the widget was configured, because the viewer's click is more
+    /// recent than the dashboard author's setting.
+    /// </summary>
+    [HardenedTest]
+    public async Task AnActionsParametersBeatTheConfiguredOnes(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """
+            {"route":"/search","limit":50,
+             "widgetContext":{"params":{"limit":20}}}
+            """);
+
+        Assert.Equal("<p>||50</p>", answer);
+    }
+
+    /// <summary>
+    /// And what the viewer typed beats what the action sent, which is the AWS sample's
+    /// <c>form.query || event.query</c> generalised. Getting this order wrong means a form that
+    /// silently ignores what was typed in it.
+    /// </summary>
+    [HardenedTest]
+    public async Task WhatTheViewerTypedBeatsEverything(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """
+            {"route":"/search","query":"from the action",
+             "widgetContext":{"params":{"query":"configured"},
+                              "forms":{"all":{"query":"typed by the viewer"}}}}
+            """);
+
+        Assert.Equal("<p>|typed by the viewer|0</p>", answer);
+    }
+
+    // ------------------------------------------------------------------ the dashboard
+
+    /// <summary>
+    /// A handler reads where it is running from <see cref="IWidgetContext"/> rather than from its
+    /// own parameters, so a tool follows the dashboard's time picker with no form field of its own.
+    /// </summary>
+    [HardenedTest]
+    public async Task TheDashboardReachesAHandlerThroughTheContext(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """
+            {"route":"/context",
+             "widgetContext":{"dashboardName":"ops","widgetId":"widget-16","theme":"dark",
+                              "timeRange":{"start":1627236199729,"end":1627322599729}}}
+            """);
+
+        Assert.Contains("ops|Dark|widget-16|", answer);
+        Assert.Contains("2021-07-25", answer);
+    }
+
+    /// <summary>
+    /// A viewer who zooms a chart expects the widget beside it to follow, so the effective range is
+    /// the zoom when there is one.
+    /// </summary>
+    [HardenedTest]
+    public async Task AZoomedChartIsTheEffectiveRange(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """
+            {"route":"/context",
+             "widgetContext":{"timeRange":{"start":1627236199729,"end":1627322599729,
+                                           "zoom":{"start":1627276030434,"end":1627282956521}}}}
+            """);
+
+        Assert.Contains("2021-07-26", answer);
+    }
+
+    /// <summary>
+    /// The ARN the helpers write into a <c>cwdb-action</c>'s endpoint, so a widget calls back into
+    /// the function and alias the viewer actually reached rather than one written into a template.
+    /// </summary>
+    [HardenedTest]
+    public async Task TheInvokedArnReachesTheContext(LambdaInvocationHandler handler) {
+        Assert.Contains(
+            "arn:aws:lambda:us-east-1:012345678901:function:customWidgetProbe",
+            await Invoke(handler, """{"route":"/context","widgetContext":{}}"""));
+    }
+
+    // ------------------------------------------------------------------ failure
+
+    /// <summary>
+    /// Answered rather than rethrown. A rethrow gives the console a FunctionError and the viewer a
+    /// blank widget; answering lets an error block reach the dashboard. The status goes nowhere,
+    /// because the console reads the body.
+    /// </summary>
+    [HardenedTest]
+    public async Task AHandlerThatThrowsStillAnswers(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """{"route":"/boom","widgetContext":{}}""");
+
+        Assert.DoesNotContain("the widget was not ready", answer);
+    }
+
+    /// <summary>
+    /// One invocation at a time in a sandbox, but the handler is resolved once and reused across
+    /// them, so a context left over from the last invocation would be served to the next.
+    /// </summary>
+    [HardenedTest]
+    public async Task ASecondInvocationSeesItsOwnContext(LambdaInvocationHandler handler) {
+        await Invoke(handler, """{"route":"/context","widgetContext":{"dashboardName":"first"}}""");
+
+        var second = await Invoke(handler,
+            """{"route":"/context","widgetContext":{"dashboardName":"second"}}""");
+
+        Assert.StartsWith("<p>second|", second);
+    }
+
+    private static async Task<string> Invoke(LambdaInvocationHandler handler, string payload) {
+        using var input = new MemoryStream(Encoding.UTF8.GetBytes(payload));
+
+        var output = await handler.Invoke(input, new WidgetLambdaContext());
+
+        // The runtime returns the adapter's stream, and what a widget wrote into it is the whole
+        // answer. A handler returning a string is serialised by the IO filter on the way out, so
+        // the HTML arrives quoted - which is what the console unwraps and renders.
+        var body = Encoding.UTF8.GetString(((MemoryStream)output).ToArray());
+
+        return body.StartsWith('"') ? JsonSerializer.Deserialize<string>(body)! : body;
+    }
+
+    private sealed class WidgetLambdaContext : ILambdaContext {
+        public string AwsRequestId => "probe-1";
+        public IClientContext ClientContext => null!;
+        public string FunctionName => "customWidgetProbe";
+        public string FunctionVersion => "$LATEST";
+        public ICognitoIdentity Identity => null!;
+        public string InvokedFunctionArn => "arn:aws:lambda:us-east-1:012345678901:function:customWidgetProbe";
+        public ILambdaLogger Logger => null!;
+        public string LogGroupName => "/aws/lambda/customWidgetProbe";
+        public string LogStreamName => "probe";
+        public int MemoryLimitInMB => 512;
+        public TimeSpan RemainingTime => TimeSpan.FromSeconds(30);
+    }
+}

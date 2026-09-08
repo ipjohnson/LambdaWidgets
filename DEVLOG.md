@@ -150,3 +150,47 @@ written above it.
 
 Also worth recording: a `dotnet build` segfaulted once during restore, exit 139, and the identical
 command succeeded immediately after. Not reproducible, not filed.
+## 2026-09-07 — The widget adapter, and two things the framework said no to
+
+Item 2, first half. `LambdaWidgets.Runtime` is the adapter, the web-shaped request, the typed
+context and `[LambdaWidgetModule]`. The Razor helpers, describe and the Echo sample are the second
+half.
+
+The module composes `[HardenedWebModule]` and `[LambdaRuntimeModule]`, so a widget application still
+writes two attributes. Without the web module there is no route table and the invocation fails with
+"This function declares no handlers", which names neither the missing module nor the widget one.
+Day-one check 7 found that; this is where it is fixed rather than in every sample.
+
+**Plan section 5.2 did not work as written, and a passing test hid it.** It says the merge becomes
+the query string and a handler binds one request object from it "with the ordinary binding". Hardened
+binds a complex parameter from the *body* — documented, deliberate, and the same on Kestrel. The
+query string was correct and `SearchRequest` came back empty.
+
+What cost the most time was that one of the tests passed for the wrong reason. Sending `limit` as a
+top-level event field meant `SearchRequest` deserialized straight out of the widget event, which
+looked exactly like successful query binding. Two of the three merge tests were vacuous. That is the
+second time in two days a test has passed for a reason unrelated to its name, and both times the
+tell was the same: a suspicious first-run pass.
+
+So the merge is now the query string *and* the body. The query string is strings, for
+`[FromQueryString]`; the body is JSON with each value's original type preserved, for a complex
+parameter. Types survive because the framework's deserializer defaults to `AllowReadingFromString`,
+so a form field's `"20"` reaches an `int`.
+
+**Then the framework refused the whole approach, and was right to.** `HRDR010`: a complex parameter
+on a `[Get]` is read from the body, and a GET carries none. True of HTTP, false of a widget, whose
+GET is a scheme label. `[FromWidget]` answers it properly — `ICustomBindingAttribute` is a source of
+its own, so the rule does not apply, and the attribute says at the handler what is happening. It
+binds through `ISerializationLocatorService` rather than reflecting over the type, which keeps it
+AOT-safe. Finding F-10.
+
+Worth recording that the custom attribute was the maintainer's call before any of this surfaced, on
+a worse argument than the one that turned out to justify it. The reason offered at the time was type
+conversion, which `AllowReadingFromString` had already solved.
+
+`WidgetRequest` enrols in the payload conformance profile, not the web one. The web profile's three
+extras are a query string, decoded values and cookies; a widget has the first two and can never have
+the third. Enrolling in the web profile would mean giving the request a cookie list it never
+carries, so the two that apply are written out in the test class instead. Finding F-09.
+
+39 tests: 12 requirements through the real `LambdaInvocationHandler`, 25 conformance, 2 written out.
