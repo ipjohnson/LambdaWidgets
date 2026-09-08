@@ -10,7 +10,7 @@ exists, so no page here has to hedge.
 | 1. `LambdaWidgets.Dashboard`, the interpreter | Done, less what the probe settles |
 | 2. `LambdaWidgets.Runtime`, the widget adapter, with the Echo sample | Done |
 | 3. Harness page, invoke proxy, test tool target, inspector | Done |
-| 4. `LambdaWidgets.Testing`, the click-through driver | Not started |
+| 4. `LambdaWidgets.Testing`, the click-through driver | Done |
 | 5. Logs Insights search sample | Not started |
 | 6. DynamoDB lookup sample | Not started |
 | 7. Deploy the search sample and check it in a real dashboard | Not started |

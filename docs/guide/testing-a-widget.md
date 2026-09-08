@@ -1,6 +1,6 @@
 # Testing a widget
 
-::: warning Not shipped yet
+::: warning Shipped
 Item 4 builds `LambdaWidgets.Testing`. See [status](/status).
 :::
 

@@ -8,7 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Hardened.Aws.Lambda.Runtime" />
         <PackageReference Include="Hardened.Aws.Lambda.Testing" />
+        <PackageReference Include="DependencyModules.Runtime" />
         <PackageReference Include="Hardened.Requests.Testing" />
         <PackageReference Include="Hardened.Shared.Testing" />
         <PackageReference Include="Hardened.Web.Testing" />
