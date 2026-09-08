@@ -303,3 +303,32 @@ by name: an optional `CancellationToken` on a shared test helper is a warning lo
 under `ContinuousIntegrationBuild`, so it lands at every call site at once and only in CI. Passing
 `TestContext.Current.CancellationToken` rather than `default` is the fix. Reading someone else's
 AGENTS.md before writing the tests would have been cheaper than reading it afterwards.
+
+## 2026-09-08 — The click-through driver, and thirty lines that went away
+
+Item 4. `IWidgetDriver` opens a widget, fills its fields, clicks something by the text a viewer
+would read, and hands back what the console would show.
+
+The rule it is built around: **nothing a test writes names a route, a payload or a JSON field**,
+because a viewer cannot name one either. `widget.Click("Run query")` breaks when the button's text
+changes, which is a behaviour change; it does not break when the route behind it is renamed, which
+is not. A test written against the payload has that backwards, and every widget test in this
+repository before today was written that way.
+
+In process, through the real `LambdaInvocationHandler`, and read back through `IWidgetConsole`.
+So the adapter, the merge, dispatch and the response path are all exercised, and what the driver
+says is on screen is what the harness would render — which is the property that makes a passing
+driver test worth anything.
+
+The proof is `Echo.Tests`. It had a hand-written `ILambdaContext`, JSON payloads as string literals,
+and a helper that unwrapped the Invoke response in every test. All of it is gone; the tests say what
+they always meant and are shorter for it. That deletion is item 4's argument.
+
+`Decline` is the piece worth having deliberately. A confirmation exists to make a destructive action
+not happen, and nobody checks that until it has failed once. `DecliningAConfirmationChangesNothing`
+asserts the screen is the same object it was.
+
+Mutation-checked three ways: a refresh that keeps the viewer's edits, a decline that invokes anyway,
+and a fill that accepts a field the widget does not have each fail exactly one test.
+
+121 tests across the solution.

@@ -7,9 +7,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="DependencyModules.SourceGenerator" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" />
+        <PackageReference Include="Hardened.Web.SourceGenerator" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Hardened.Aws.Lambda.Runtime" />
         <PackageReference Include="Hardened.Shared.Testing" />
         <PackageReference Include="Hardened.Shared.Testing.xUnit" />
+        <PackageReference Include="Hardened.Templates.RazorBlade" />
+        <PackageReference Include="Hardened.Web.Runtime" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="RazorBlade" />
         <PackageReference Include="xunit.v3" />
         <PackageReference Include="xunit.runner.visualstudio">
             <PrivateAssets>all</PrivateAssets>
@@ -18,11 +28,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\samples\Echo\Echo.csproj" />
-        <!--
-          The click-through driver, which brings the interpreter with it. The sample is driven the
-          way a viewer drives it and read back with the code the console's behaviour is modelled in.
-        -->
         <ProjectReference Include="..\..\src\LambdaWidgets.Testing\LambdaWidgets.Testing.csproj" />
     </ItemGroup>
 
