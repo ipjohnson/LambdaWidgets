@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>Deploy</RootNamespace>
+        <!-- jsii's generated bindings are not annotated for trimming, and a CDK app is a build-time
+             tool rather than something deployed, so it is the one project here that does not
+             publish ahead of time. -->
+        <IsAotCompatible>false</IsAotCompatible>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Amazon.CDK.Lib" />
+        <PackageReference Include="Constructs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="dashboard.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="cdk.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>

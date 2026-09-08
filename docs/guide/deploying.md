@@ -1,6 +1,6 @@
 # Deploying
 
-::: warning Not shipped yet
+::: warning Shipped, but not yet run against an account
 Item 7 deploys the first sample for real. See [status](/status).
 :::
 
