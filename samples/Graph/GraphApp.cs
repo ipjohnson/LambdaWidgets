@@ -40,10 +40,12 @@ public class Pages(Metrics metrics) {
                 .In("per 5 min"),
 
             // Clicking a column drills in, which is the thing worth demonstrating: a chart is not
-            // a picture here, it is a set of links.
+            // a picture here, it is a set of links. The route comes from the generated Routes
+            // rather than a literal: a handler has no Links property, and Routes is the same paths
+            // as plain strings, so renaming Function breaks this line during the build.
             ByFunction: Chart.Across("Errors by function", metrics.ByFunction())
                 .In("in range")
-                .DrillingTo("/function", "function"),
+                .DrillingTo(GraphApp.Routes.Pages.Function(), "function"),
 
             Open: Chart.Number("Open incidents", 3),
             Detail: null);

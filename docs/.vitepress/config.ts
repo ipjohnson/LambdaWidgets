@@ -33,6 +33,7 @@ export default defineConfig({
           text: 'Using',
           items: [
             { text: 'Running the harness', link: '/guide/running-the-harness' },
+            { text: 'Starting from a template', link: '/guide/templates' },
             { text: 'Writing a widget in C#', link: '/guide/writing-a-widget' },
             { text: 'Charting data', link: '/guide/charting-data' },
             { text: 'Testing a widget', link: '/guide/testing-a-widget' },

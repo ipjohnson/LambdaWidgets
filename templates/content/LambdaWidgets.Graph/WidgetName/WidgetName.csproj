@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      A deployed widget is this assembly, and Program.cs is the entry point the Lambda runtime
+      starts. An executable, because the handler a deployment registers is the assembly name alone
+      and the runtime starts that only when the assembly has one.
+    -->
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>WidgetName</RootNamespace>
+        <AssemblyName>customWidgetWidgetName</AssemblyName>
+        <!-- Deployed ahead-of-time for provided.al2023, so anything linked here has to publish
+             clean. Keep this on: it turns a trim-unsafe call into a build error rather than a
+             widget that throws once it is deployed. -->
+        <IsAotCompatible>true</IsAotCompatible>
+        <InvariantGlobalization>true</InvariantGlobalization>
+    </PropertyGroup>
+
+    <!--
+      One version line per family, and everything inside a family moves together. A skew between
+      Hardened packages is a compile error in generated code, which reads as a generator defect
+      rather than as a pin problem.
+    -->
+    <PropertyGroup>
+        <HardenedVersion>HARDENED_VERSION</HardenedVersion>
+        <LambdaWidgetsVersion>LAMBDAWIDGETS_VERSION</LambdaWidgetsVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="LambdaWidgets.Runtime" Version="$(LambdaWidgetsVersion)" />
+        <PackageReference Include="LambdaWidgets.Charts" Version="$(LambdaWidgetsVersion)" />
+        <PackageReference Include="AWSSDK.CloudWatch" Version="3.7.507.14" />
+        <PackageReference Include="Hardened.Shared.Runtime" Version="$(HardenedVersion)" />
+        <PackageReference Include="Hardened.Web.Runtime" Version="$(HardenedVersion)" />
+        <PackageReference Include="Hardened.Aws.Lambda.Runtime" Version="$(HardenedVersion)" />
+        <PackageReference Include="Hardened.Templates.RazorBlade" Version="$(HardenedVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
+        <!-- Directly, because RazorBlade ships no buildTransitive: the .props that globs
+             **/*.cshtml never reaches a project that only references it through another package,
+             and the views below would silently not compile. -->
+        <PackageReference Include="RazorBlade" Version="1.0.0" />
+    </ItemGroup>
+
+    <!--
+      Three generators, and all three are needed. DependencyModules.SourceGenerator emits the module
+      attributes this application applies, Hardened.Library.SourceGenerator emits
+      PopulateServiceCollection, and Hardened.Web.SourceGenerator emits the route table, the Links
+      type and the view base. Drop any one and the error names none of them.
+    -->
+    <ItemGroup>
+        <PackageReference Include="DependencyModules.SourceGenerator" Version="1.3.1" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" Version="$(HardenedVersion)" />
+        <PackageReference Include="Hardened.Web.SourceGenerator" Version="$(HardenedVersion)" />
+    </ItemGroup>
+
+</Project>

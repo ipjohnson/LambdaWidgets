@@ -31,3 +31,21 @@ jobs:
 
       - name: Test
         run: dotnet test LambdaWidgets.slnx --configuration Release -p:ContinuousIntegrationBuild=true --no-build --logger "console;verbosity=normal"
+
+  # A template is only correct if what comes out of it compiles, so this generates a project from
+  # each one and builds and tests it. Separate from the build job because it works outside the
+  # repository: a project generated inside it would inherit Directory.Build.props and
+  # Directory.Packages.props and prove nothing about what a user gets.
+  templates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Generate, build and test each template
+        run: ./templates/verify.sh "$RUNNER_TEMP/templates"

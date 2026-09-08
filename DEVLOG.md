@@ -570,3 +570,56 @@ see locally. Worth a control.
 An unknown widget id answers `500` with an empty `details`. The message the harness raises is good —
 it names the ids the dashboard does have — and the HTTP layer discards it. That is every route's
 error mapping rather than this one, so it is noted rather than patched here.
+
+## 2026-09-08  Three templates, and the rule the samples were breaking
+
+`dotnet new lw-logs`, `lw-ddb`, `lw-graph`. One per shape a custom widget takes: a Logs Insights
+query, a DynamoDB query paged with no session, and a chart over CloudWatch metrics. Each produces a
+widget, a test project that drives it the way a viewer does, and a one-widget dashboard for the
+harness.
+
+### The samples were teaching the opposite of the rule
+
+`WidgetHelpers` has carried this since the day it was written: *every route argument comes from the
+generated `Links` or `Routes` type, never from a literal*. It is the whole argument for the design —
+rename a handler and the template breaks during the build instead of shipping a button that does
+nothing.
+
+Every sample used a literal. Four views and one handler, all of them `"/search"` and `"/look-up"`.
+Nothing enforced the rule, and nothing noticed.
+
+The generated `Links` was there the whole time. `Links.Pages.Search()` in a view, resolved off the
+template base; `WidgetNameApp.Routes.Pages.Search()` in a handler, where there is no `Links`. Both
+work, all 189 tests pass with them, and renaming `Search` now fails two views at their own lines:
+
+    Views/LandingPage.cshtml(9,41): error CS1061: 'LogsSearchApp.Links.PagesLinks' does not
+    contain a definition for 'Search'
+
+That is what the rule promised. The templates carry it, and the template check greps for a quoted
+string starting with a slash inside a helper call, so a template cannot drift back.
+
+### Templates that are checked rather than hoped for
+
+`templates/verify.sh` packs this working tree at a local version, packs the template pack, installs
+the templates **from the nupkg**, generates a project from each, and builds and tests it. CI runs
+it as its own job.
+
+Installing the folder would have missed the packaging: `ContentTargetFolders` prepends `content/`
+to a path that already starts with it, so every template shipped at `content/content/...`. Only
+opening the nupkg showed that.
+
+The generated widget is built with `-warnaserror`. It declares `IsAotCompatible`, and an IL2xxx
+there is a widget that publishes fine and throws once it is deployed. All three are clean, which
+also settles that CloudWatch `GetMetricData` needs no trim hints.
+
+### The version problem, answered honestly
+
+Nothing is on nuget.org, so a template that references `LambdaWidgets.Runtime` by version cannot
+restore for anyone yet. The alternative — shipping a `nuget.config` pointing at a folder — would be
+wrong for the published future and would have to be undone.
+
+So the templates reference versions the way a real consumer will, `--widgetsVersion` overrides
+them, and the check packs locally and passes the local version. When the first tag ships, the
+default becomes real and nothing else changes.
+
+189 tests here, 22 more in the projects the templates generate.
