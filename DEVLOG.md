@@ -499,3 +499,74 @@ finding nothing — form values arrive under `widgetContext.forms.all`, and a fa
 wrong place is a fake being simplistic rather than a defect.
 
 172 tests. Every item in the plan that can be built without an AWS account is now built.
+
+## 2026-09-08  Charts, and pointing at them
+
+`LambdaWidgets.Charts`. A widget that queries something usually wants to draw the answer, and the
+console strips `<script>`, so the chart has to arrive already drawn. SVG, server-side, from a
+`Chart` a handler describes rather than draws.
+
+The library makes three decisions a widget author would otherwise make wrong. A one-row breakdown is
+a number, not a one-bar bar chart. Past three series the tail is summed into `Other` rather than
+dropped. There is no dual axis, at all, because a second y-scale invents a correlation that is not
+in the data.
+
+The palette was validated rather than picked: four categorical slots per theme, checked against the
+console's own surfaces for the lightness band, the chroma floor, colour-vision separation and the
+normal-vision floor. The fourth slot exists because folding produces a fourth line. `For` used to
+wrap modulo three, which handed `Other` the same blue as the largest series — a repeated colour that
+looks like data. It throws now, and `ChartLimits.Fold` is what keeps the count in range.
+
+The theme is resolved on the server. A web page guesses the reader's theme from
+`prefers-color-scheme`; a widget does not have to, because the console sends its own theme in the
+event.
+
+### The hover layer
+
+Asked for a crosshair that shows every series at one moment. CSS `:hover` and `:focus-within` over
+one transparent band per data position, which is not JavaScript and survives the sanitizer.
+
+Two things came out of building it that reading would not have.
+
+The first: a card that follows the pointer covers the data. The first version floated a readout
+beside the crosshair, and on screen it sat over the neighbouring bins — hiding exactly the
+comparison the reader was hovering to make. The card is a hundred pixels wide and a bin is sixteen,
+so no amount of per-bin repositioning fixes it. The readout moved to a reserved row under the axis:
+it hides nothing, it lands in the same place every time, and it costs twenty pixels of height.
+
+The second: hidden by attribute, revealed by stylesheet, never the other way round. Each readout
+carries `opacity="0"` and the rule only turns it on. Whether the console keeps a `<style>` block is
+on the probe's list; if it does not, the chart draws plain. A rule that did the hiding would have
+put thirty-six readouts on screen at once.
+
+Columns got the same treatment, because two charts in one widget where only one responds reads as
+broken. The band is the hit target rather than the column — a 24px column in a 114px band is a
+pinpoint — and the readout spells out the name the axis had to truncate, which is a legibility bug
+the hover layer happened to fix.
+
+None of this gates anything. Every chart ships a `<details>` table with every value in it.
+
+### What the screenshots caught
+
+Four defects, none of which a test would have found, all of which one look did: the floating card
+occluding lines, two adjacent column labels running together, the axis truncating a name with
+nowhere else to read it, and the readout itself truncating that name to fifteen characters after
+being given the job of showing it in full.
+
+Verified in the browser with a real hover and a real focus rather than assumed: click a band, move
+the pointer to the far side of the page, and the readout stays — which is the keyboard path.
+
+189 tests. The seventeen new ones were mutation-tested five ways — readouts visible at rest, the
+focus rule removed, the series names dropped, the palette cycling again, a single category drawing
+a column — and each mutation failed a test.
+
+### Two harness gaps
+
+The API can set the theme and the page cannot. `PUT /api/dashboards/{id}/state` with
+`{"theme":"dark"}` works, and the widget comes back in the dark palette; there is no control on the
+harness page to do it, so the theme where charting palettes actually break is the one nobody can
+see locally. Worth a control.
+
+An unknown widget id answers `500` with an empty `details`. The message the harness raises is good —
+it names the ids the dashboard does have — and the HTTP layer discards it. That is every route's
+error mapping rather than this one, so it is noted rather than patched here.

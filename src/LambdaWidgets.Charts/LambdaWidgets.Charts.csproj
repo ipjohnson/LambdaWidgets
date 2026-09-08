@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>LambdaWidgets.Charts</PackageId>
+        <Description>Charts for CloudWatch custom widgets: inline SVG rendered on the server, because the console strips JavaScript. Validated colours for both console themes, and a table beside every chart.</Description>
+        <!-- Deployed inside a widget, which publishes ahead of time. -->
+        <IsAotCompatible>true</IsAotCompatible>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DependencyModules.Runtime" />
+        <PackageReference Include="DependencyModules.SourceGenerator" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" />
+        <PackageReference Include="RazorBlade" />
+        <PackageReference Include="System.Text.Json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\LambdaWidgets.Runtime\LambdaWidgets.Runtime.csproj" />
+    </ItemGroup>
+
+</Project>

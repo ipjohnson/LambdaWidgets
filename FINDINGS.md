@@ -373,10 +373,34 @@ The model to read for item 2 is now in Hardened.Framework rather than Amz: `IPay
 
 Everything it settles is marked **unverified** in `docs/reference/` until it runs.
 
-## 4. The test tool's ARN
+What it has to answer has grown with the charts work, and these three are new:
 
-    Open. Run Echo under the test tool and read what Lambda-Runtime-Invoked-Function-Arn carries,
-    so the harness's name mapping and the helper's endpoint agree locally.
+- **Does a `<style>` block survive?** The rendering rules say yes and nothing has tested it. The
+  chart hover layer is CSS, so this decides whether pointing at a chart does anything. It is not
+  load-bearing: the readouts carry `opacity="0"` and the stylesheet only reveals them, so a console
+  that dropped the block draws a plain chart rather than thirty overlapping readouts.
+- **Does a `cwdb-action` bind inside an `<svg>`?** Our interpreter binds the previous element
+  sibling wherever it is. If the console does not, clicking a column does nothing — which is why
+  every chart also puts the same links in the table beneath it.
+- **What does `widgetContext.width`/`height` carry?** The interpreter passes the dashboard body's
+  grid units straight through as pixels, which cannot both be right. A chart sizes itself from the
+  `viewBox` and does not care, but the harness's fidelity does.
+
+## 4. The test tool's ARN   Answered 2026-09-08
+
+**A fixed placeholder, the same for every function.** Run under the AWS Lambda Test Tool,
+`ILambdaContext.InvokedFunctionArn` is
+
+    arn:aws:lambda:us-west-2:123412341234:function:Function
+
+regardless of the assembly name, the `--function` argument or the invoke path. The Razor helpers
+write that string into every `cwdb-action` endpoint, and a click posts back to it.
+
+Two consequences. The harness cannot route by function name under the test tool, so
+`--function name=url` works against a runtime interface emulator or SAM and not against this
+target — `InvokeTargets.TestTool` maps every widget onto the one port instead. And a widget under
+the test tool cannot tell what it is deployed as, so anything reading the ARN for its own account or
+region gets the placeholder's.
 
 ## 5. The parsers under AOT   Answered 2026-09-06
 

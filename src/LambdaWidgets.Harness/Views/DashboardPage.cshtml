@@ -12,7 +12,7 @@
 </header>
 <main id="dashboard">
   @foreach (var widget in Model.Harness.Dashboard.Widgets) {
-    <section class="slot" data-widget="@widget.Id" data-title="@widget.Title"></section>
+    <section class="slot" data-widget="@widget.Id" data-title="@widget.Title" style="--w:@widget.Width;--h:@widget.Height"></section>
   }
 </main>
 <script src="/harness.js"></script>

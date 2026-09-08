@@ -5,8 +5,12 @@ body { margin: 0; background: var(--ground); color: var(--ink);
        font: 14px "Amazon Ember", "Helvetica Neue", Arial, sans-serif; }
 header { display: flex; gap: 16px; align-items: baseline;
          padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-       gap: 16px; padding: 16px; }
+/* The console's own grid is 24 columns wide, and a widget's width and height are in its units.
+   A harness that laid every widget out the same size would show an author a layout they will not
+   get, which is the one thing it exists to avoid. */
+main { display: grid; grid-template-columns: repeat(24, 1fr); gap: 16px; padding: 16px; }
+.slot { grid-column: span var(--w, 6); min-height: calc(var(--h, 6) * 34px); }
+@media (max-width: 900px) { .slot { grid-column: 1 / -1; } }
 .widget { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 12px; }
 .rendered { min-height: 60px; }
 .failed { border-left: 3px solid #d13212; padding-left: 10px; }
