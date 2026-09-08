@@ -1,12 +1,11 @@
 # Running the harness
 
-::: warning Not shipped yet
-Item 3 builds the harness page and item 8 builds the distribution. Nothing on this page runs today.
-See [status](/status). What is written here is the shape it is being built to.
-:::
-
-`lambda-widgets` will ship three ways: a native binary per platform on the GitHub release, a Docker
+`lambda-widgets` ships three ways: a native binary per platform on the GitHub release, a Docker
 image, and a dotnet tool for people who already have the SDK.
+
+```bash
+dotnet tool install --global LambdaWidgets.Harness --prerelease
+```
 
 ```bash
 lambda-widgets --dashboard ./dashboard.json

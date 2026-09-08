@@ -1,10 +1,5 @@
 # Writing a widget in C#
 
-::: warning Not shipped yet
-Item 2 builds `LambdaWidgets.Runtime`. The code on this page is the shape being built to, not an
-API you can call. See [status](/status).
-:::
-
 A widget application is a [Hardened](https://github.com/ipjohnson/Hardened.Framework) application on
 a widget host. It is web-shaped rather than function-shaped, which is the whole point: pages are
 ordinary routes, so the generated `Routes` and `Links` types, the template bases, validation and the

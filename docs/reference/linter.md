@@ -1,9 +1,5 @@
 # Linter findings
 
-::: warning Shipped
-Item 9 builds the linter. See [status](/status).
-:::
-
 Every finding here is something the console does silently. Your widget renders, part of it does not
 work, and nothing anywhere says why. The linter reports them in the harness's inspector, on every
 [HTTP API](/reference/http-api) response, and to the test driver, where an assertion on an empty

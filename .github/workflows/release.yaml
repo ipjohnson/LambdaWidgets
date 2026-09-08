@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   # One job per runner architecture, because ahead-of-time compilation does not cross-compile: ILC
@@ -127,14 +128,69 @@ jobs:
             exit 1
           fi
 
+      # The harness ships as a dotnet tool as well as a native binary, and the two are packaged by
+      # different steps. The binaries job proves its binary starts; nothing proved the tool did
+      # until this, and a tool that installs and cannot serve is the same green release.
+      - name: The tool runs
+        run: |
+          echo '{"widgets":[]}' > empty.json
+          dotnet tool install --tool-path tool --add-source packages \
+            --version ${{ steps.version.outputs.version }} LambdaWidgets.Harness
+          PORT=5086 tool/lambda-widgets --dashboard empty.json &
+          sleep 10
+          curl --fail --silent --max-time 20 http://localhost:5086/ > /dev/null
+
       - uses: actions/upload-artifact@v4
         with:
           name: packages
           path: packages/*.nupkg
 
-  publish:
-    needs: [binaries, packages]
+  # The README tells people to docker run this, so a release that does not build it is a release
+  # that breaks the first thing on the page. ghcr.io takes the built-in token, so no secret.
+  image:
     runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # The Dockerfile compiles the harness ahead of time inside the build stage, so this is one
+      # architecture per runner the same way the binaries are. amd64 only for now: an arm64 image
+      # needs an arm64 runner, not emulation, because ILC does not cross-compile.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/lambda-widgets:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/lambda-widgets:latest
+
+      # The same check the binaries get, for the same reason: an image that builds and cannot serve
+      # is the same green release.
+      - name: The image runs
+        run: |
+          echo '{"widgets":[]}' > empty.json
+          docker run --rm --detach --name harness -p 5087:5080 \
+            --volume "$PWD/empty.json:/dashboard.json" \
+            ghcr.io/${{ github.repository_owner }}/lambda-widgets:${{ github.ref_name }}
+          sleep 10
+          curl --fail --silent --max-time 20 http://localhost:5087/ > /dev/null
+          docker stop harness
+
+  publish:
+    needs: [binaries, packages, image]
+    runs-on: ubuntu-latest
+
+    # At the job rather than on the step that uses it. A step's own env block is not in scope for
+    # that step's if, so gating on it there skips the push every time, secret or no secret - a
+    # release that builds everything, tags it, and quietly publishes nothing.
+    env:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
     steps:
       - uses: actions/download-artifact@v4
@@ -157,8 +213,6 @@ jobs:
       # can still fail.
       - name: nuget.org
         if: ${{ env.NUGET_API_KEY != '' }}
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
           dotnet nuget push "artifacts/packages/*.nupkg" \
             --source https://api.nuget.org/v3/index.json \

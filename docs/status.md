@@ -1,7 +1,16 @@
 # Status
 
-LambdaWidgets is being built in the open and nothing is on nuget.org yet. This page says what
-exists, so no page here has to hedge.
+LambdaWidgets is on nuget.org at `0.1.0-rc1000`, a prerelease. This page says what exists, so no
+page here has to hedge.
+
+```bash
+dotnet tool install --global LambdaWidgets.Harness --prerelease
+dotnet new install LambdaWidgets.Templates::0.1.0-rc1000
+dotnet add package LambdaWidgets.Runtime --prerelease
+```
+
+A prerelease because everything here depends on Hardened.Framework `0.30.0-rc1000`, which is one
+itself. A stable version of this would be claiming more than the stack under it has.
 
 | Item | State |
 |---|---|
@@ -18,6 +27,7 @@ exists, so no page here has to hedge.
 | 9. HTTP API for tests in other languages, and the linter | Done |
 | 10. `LambdaWidgets.Charts`, SVG charts with a hover layer | Done |
 | 11. `dotnet new` templates for the three widget shapes | Done |
+| 12. First release: six packages, five binaries, an image | Done |
 
 ## What is already true
 
@@ -26,7 +36,10 @@ The reference section is not a plan. Everything under
 `cloudwatch-custom-widgets-samples` repository, and it describes the console as it behaves today. It
 is useful whether or not you ever use anything in this repository.
 
-The guide describes the products being built. Each page says at the top what is not shipped yet.
+The guide describes what is released. The few pages with something still unproven say so at the
+top: [deploying](/guide/deploying) has not been run against a real account, the console's handling
+of a chart's `style` block and its `cwdb-action` elements is [unverified](/guide/charting-data), and
+`--aws` is the one [invoke target](/reference/invoke-targets) not built.
 
 ## Why it exists
 
