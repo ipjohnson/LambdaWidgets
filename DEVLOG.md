@@ -436,3 +436,33 @@ Mutation-checked: widening the role to `logs:*`, leaving the placeholder endpoin
 body, and swapping the native runtime for the managed one each fail exactly one test.
 
 155 tests. Day-one check 3, the probe, is what is left, and it needs an account.
+
+## 2026-09-08 — Distribution, and the binary that had to start
+
+Item 8. A release workflow on a `v*` tag, a Dockerfile, and the README pitch. The dotnet tool was
+already half done — the harness carried `PackAsTool` from the scaffold.
+
+**Checked before claiming, in the order that mattered.** The plan says the harness ships as a native
+binary, so before writing a workflow that assumes it: `dotnet publish -p:PublishAot=true` on the
+harness emits zero `IL2xxx` or `IL3xxx` and produces 16 MB carrying AngleSharp, Markdig, RazorBlade
+views, Kestrel and the static content. Then the binary itself was started and asked for a widget,
+and it rendered one, stripped a `<script>` and reported the removal. Day-one check 5 said the parsers
+publish clean; this is the first time the whole application has.
+
+The workflow has an **It runs** step for the same reason. A publish that succeeded and a binary that
+cannot reach its own embedded static content are the same green check, and only starting it tells
+them apart. It is five lines and it is the step most likely to earn its place.
+
+One matrix job per runner architecture, because ahead-of-time compilation does not cross-compile:
+ILC emits native code for the machine it runs on, so a `linux-arm64` binary needs a `linux-arm64`
+runner. That is the reason distribution is a matrix rather than one publish with five `-r` flags,
+and it is worth a comment because the shape looks like over-engineering until you know.
+
+Two things borrowed from Hardened's own release, both of which its AGENTS.md records as having gone
+wrong: the pack list is named rather than globbed, and the expected count is a literal. A packable
+project silently dropped from a glob ships a release missing that package and says nothing, which is
+a failure a consumer discovers rather than CI. The push to nuget.org is last, because a package
+cannot be unpublished and it is the one step with no way back.
+
+All four packages pack, verified rather than assumed, and the harness's tool manifest declares the
+`lambda-widgets` command.
