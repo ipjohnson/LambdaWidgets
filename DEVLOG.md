@@ -666,3 +666,33 @@ Everything was rehearsed locally before the tag: six packages packed under
 built and served on 5087, and all three templates generated against the packed pack.
 
 189 tests here, 22 in the generated projects.
+
+## 2026-09-08  Show the code
+
+The README was 102 lines and did not contain one line of widget code. It spent twenty-five lines
+explaining what a custom widget is before showing anything, and never showed a handler, a view, a
+test, or a template. What sells this is the code, and none of it was on the page.
+
+Both landing pages lead with it now: `dotnet new`, then the handler and the view, then the test,
+then a chart with a screenshot of what it renders. The prose about what a custom widget is moved
+to the bottom, where somebody who is still reading can find it.
+
+### The examples were teaching the wrong file layout
+
+Every sample and every template put the `[HardenedModule]` application class and the `Pages`
+handler in one file. The application is a composition root - one per widget, four lines and a
+module list. Handlers are ordinary classes and a widget usually has several. One file for both
+reads as though they belong together, and the first thing anyone does with a template is add a
+second handler.
+
+Split, in all four samples and all three templates: `<Name>App.cs` composes, `Pages.cs` handles.
+
+### The guide's code did not compile
+
+`writing-a-widget` is the page somebody reads before writing one, and four things in it were
+wrong. It inherited `WidgetTemplate<TModel>` directly, which the runtime's own documentation says
+is the mistake that costs you the generated `Links`. It had no `[Output<TView>]`, so the handler
+would answer JSON. It bound a complex parameter on a `[Get]` with no `[FromWidget]`, which is
+`HRDR010`. And it called `Widget.Link` with a `display:` argument that does not exist.
+
+Rewritten against the code the templates emit, which is checked by CI every run.
