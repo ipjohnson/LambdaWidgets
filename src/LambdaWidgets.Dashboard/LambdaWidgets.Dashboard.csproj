@@ -9,8 +9,28 @@
         <IsAotCompatible>true</IsAotCompatible>
     </PropertyGroup>
 
+    <!--
+      Day-one check 5 published both under PublishAot with no trim or AOT warning, against the
+      three jobs this library actually does rather than by linking them: finding a cwdb-action and
+      its PreviousElementSibling, enumerating input[name], textarea[name], select[name], and
+      rendering describe markdown with a fenced yaml block.
+    -->
     <ItemGroup>
+        <PackageReference Include="AngleSharp" />
+        <PackageReference Include="Markdig" />
         <PackageReference Include="System.Text.Json" />
+    </ItemGroup>
+
+    <!--
+      The console's rules ship as a module, the way every Hardened library does. The generators are
+      what turn [DependencyModule] into an attribute an application can apply and a
+      PopulateServiceCollection it can call; both are developmentDependency and neither flows to a
+      consumer. See AGENTS.md.
+    -->
+    <ItemGroup>
+        <PackageReference Include="DependencyModules.Runtime" />
+        <PackageReference Include="DependencyModules.SourceGenerator" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" />
     </ItemGroup>
 
 </Project>

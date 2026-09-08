@@ -111,3 +111,42 @@ function declares no handlers" — item 2 should compose that onto `[LambdaWidge
 author still writes two attributes. And a handler returning a bare `string` comes back
 JSON-serialized, which is the reason section 5.3 routes HTML through a template rather than a
 `string`.
+
+## 2026-09-07 — The interpreter, and being told how to test
+
+Item 1. `LambdaWidgets.Dashboard` is the console's rules: what an invocation carries, what a click
+sends, what survives rendering, what a form field contributes.
+
+Two corrections landed on this before a line of it was right, and both were the same mistake in
+different clothes.
+
+**It is a module, not a bag of static classes.** The first draft was `static class Actions`,
+`static class Sanitizer` and so on, which is not how a Hardened library is built: every shipped one
+—  `Hardened.Web.StaticContent`, `Hardened.Requests.Caching.Memory`,
+`Hardened.Requests.Serializers.Newtonsoft` — ships a `[DependencyModule]` registering services. It
+is now `[DashboardModule]` over eight services with `IWidgetConsole` composed on top, all `TryAdd`
+so a stricter sanitizer or a measured stylesheet can replace one. Section 6's stated reason for the
+library existing is that the harness and the test driver cannot be allowed to drift; a registration
+enforces that and two static classes do not.
+
+**Test the requirement, not the implementation.** Having written it static, the tests needed no
+container, and that was used as an argument that none was needed — reasoning from the mistake
+rather than to it. The suite is now `WhatTheConsoleSendsTests` and `WhatTheConsoleShowsTests`
+through `IWidgetConsole` resolved by `[HardenedTest]`, with names like
+`ARefreshReturnsTheWidgetToItsLandingPage` and `AnUncheckedBoxSendsNothing`. What stayed direct is
+where the implementation *is* the requirement: the sanitizer's list, the ARN-to-function-name split,
+the faults an author is told about. Hardened's own suite splits the same way.
+
+`[HardenedTest]` resolves from `[assembly: DashboardModule]` with no application entry point, which
+was worth checking rather than assuming.
+
+**Mutation-checked, and one test was a lie.** Sixteen tests passed on the first run, which is a
+reason for suspicion rather than confidence, so two deliberate breaks went in.
+`AnActionInsideAStrippedElementCannotBeClicked` survived a mutation that read actions from the raw
+response instead of the sanitized one — it had been written with `<iframe>`, whose content every
+HTML parser treats as text, so there was never an action inside it to find. `<use>` is the one
+removal of the three whose children are parsed as elements. The test now bites, and the reason is
+written above it.
+
+Also worth recording: a `dotnet build` segfaulted once during restore, exit 139, and the identical
+command succeeded immediately after. Not reproducible, not filed.
