@@ -1,0 +1,164 @@
+name: release
+
+# A v* tag is the whole trigger, and the tag is the version. Nothing in the repository carries a
+# version number, so there is no second place for one to be wrong.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  # One job per runner architecture, because ahead-of-time compilation does not cross-compile: ILC
+  # emits native code for the machine it runs on, and a linux-arm64 binary needs a linux-arm64
+  # runner. This is the reason distribution is a matrix rather than one publish with five -r flags.
+  binaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            rid: linux-x64
+          - runner: ubuntu-24.04-arm
+            rid: linux-arm64
+          - runner: macos-latest
+            rid: osx-arm64
+          - runner: macos-13
+            rid: osx-x64
+          - runner: windows-latest
+            rid: win-x64
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Publish
+        shell: bash
+        run: |
+          dotnet publish src/LambdaWidgets.Harness \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            -p:PublishAot=true \
+            -p:TrimmerSingleWarn=false \
+            --output publish/${{ matrix.rid }}
+
+      # The binary is the deliverable, so it has to start. A publish that succeeded and a binary
+      # that cannot reach its own static content are the same green check, and only this tells them
+      # apart.
+      - name: It runs
+        shell: bash
+        run: |
+          echo '{"widgets":[]}' > empty.json
+          BIN=publish/${{ matrix.rid }}/lambda-widgets
+          [ -f "$BIN.exe" ] && BIN="$BIN.exe"
+          PORT=5085 "$BIN" --dashboard empty.json &
+          sleep 5
+          curl --fail --silent --max-time 20 http://localhost:5085/ > /dev/null
+
+      - name: Package
+        shell: bash
+        run: |
+          cd publish/${{ matrix.rid }}
+          # The binary and nothing else. Static content is embedded, and a folder of loose files is
+          # a worse thing to hand someone than one executable.
+          if [ -f lambda-widgets.exe ]; then
+            7z a ../../lambda-widgets-${{ matrix.rid }}.zip lambda-widgets.exe
+          else
+            tar czf ../../lambda-widgets-${{ matrix.rid }}.tar.gz lambda-widgets
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lambda-widgets-${{ matrix.rid }}
+          path: lambda-widgets-${{ matrix.rid }}.*
+
+  packages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      # The tag is the version, with the leading v removed. A package version set anywhere else
+      # would be a second place for it to disagree with the tag that produced it.
+      - name: Version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # Named, not globbed. A packable project silently dropped from a glob ships a release missing
+      # that package, which is a failure nobody notices until a consumer restores.
+      - name: Pack
+        run: |
+          for project in \
+            src/LambdaWidgets.Dashboard/LambdaWidgets.Dashboard.csproj \
+            src/LambdaWidgets.Runtime/LambdaWidgets.Runtime.csproj \
+            src/LambdaWidgets.Testing/LambdaWidgets.Testing.csproj \
+            src/LambdaWidgets.Harness/LambdaWidgets.Harness.csproj
+          do
+            dotnet pack "$project" --configuration Release \
+              -p:Version=${{ steps.version.outputs.version }} \
+              -p:ContinuousIntegrationBuild=true \
+              --output packages
+          done
+
+      # Four, and the count is a literal on purpose. A project that stops packing - IsPackable
+      # flipped, a rename - otherwise ships a release short one package and says nothing.
+      - name: Four packages
+        run: |
+          COUNT=$(ls packages/*.nupkg | wc -l)
+          if [ "$COUNT" -ne 4 ]; then
+            echo "::error::Packed $COUNT packages, expected 4. Update this workflow if one was added or removed."
+            ls packages/
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: packages/*.nupkg
+
+  publish:
+    needs: [binaries, packages]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            artifacts/*/lambda-widgets-*.tar.gz \
+            artifacts/*/lambda-widgets-*.zip
+
+      # Last, and only once the binaries are built and the release exists. A package on nuget.org
+      # cannot be unpublished, so it is the step with no way back and it goes after every step that
+      # can still fail.
+      - name: nuget.org
+        if: ${{ env.NUGET_API_KEY != '' }}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push "artifacts/packages/*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "$NUGET_API_KEY" \
+            --skip-duplicate

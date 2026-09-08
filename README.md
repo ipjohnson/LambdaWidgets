@@ -5,8 +5,9 @@ developing them.
 
 **Documentation: <https://ipjohnson.github.io/LambdaWidgets>**
 
-> Nothing is on nuget.org yet. See [status](https://ipjohnson.github.io/LambdaWidgets/status) for
-> what exists. The [console contract](https://ipjohnson.github.io/LambdaWidgets/reference/console-contract)
+> Nothing is on nuget.org yet, and the first release is what puts it there. See
+> [status](https://ipjohnson.github.io/LambdaWidgets/status) for what exists. The
+> [console contract](https://ipjohnson.github.io/LambdaWidgets/reference/console-contract)
 > reference describes CloudWatch as it behaves today and is useful on its own.
 
 ## What a custom widget is
@@ -47,6 +48,29 @@ sides in one repository.
 Everything awkward, missing or broken that turns up while building on it is recorded in
 [FINDINGS.md](FINDINGS.md). That log is the deliverable. Adoption is a consequence, not the
 objective.
+
+## Running the harness
+
+A single native binary with nothing to install:
+
+```bash
+lambda-widgets --dashboard dashboard.json
+```
+
+It opens on <http://localhost:5080> with your dashboard's widgets on it, invokes them through
+whatever is serving them, and shows you the event it sent, what the console's sanitizer would have
+removed and how long the invoke took. None of that is visible on a real dashboard.
+
+Get it as a native binary from the [releases](https://github.com/ipjohnson/LambdaWidgets/releases),
+as a container, or as a dotnet tool if you already have the SDK:
+
+```bash
+docker run --rm -p 5080:5080 -v "$PWD/dashboard.json:/dashboard.json" ghcr.io/ipjohnson/lambda-widgets
+dotnet tool install --global LambdaWidgets.Harness
+```
+
+Your widget can be written in anything. The harness talks the Lambda Invoke API, so it drives the
+AWS Lambda Test Tool, a runtime interface emulator, `sam local`, or a deployed function.
 
 ## Building
 
