@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <!-- xUnit v3 test projects are self-executing. -->
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <!--
+      A widget application, as a fixture. The generators are the ones any Hardened application
+      carries: the module and its attribute, and the route table the widget adapter dispatches into.
+    -->
+    <ItemGroup>
+        <PackageReference Include="DependencyModules.SourceGenerator" />
+        <PackageReference Include="Hardened.Library.SourceGenerator" />
+        <PackageReference Include="Hardened.Web.SourceGenerator" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Hardened.Aws.Lambda.Runtime" />
+        <PackageReference Include="Hardened.Requests.Testing" />
+        <PackageReference Include="Hardened.Shared.Testing" />
+        <PackageReference Include="Hardened.Shared.Testing.xUnit" />
+        <PackageReference Include="Hardened.Web.Runtime" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit.v3" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\LambdaWidgets.Runtime\LambdaWidgets.Runtime.csproj" />
+    </ItemGroup>
+
+</Project>

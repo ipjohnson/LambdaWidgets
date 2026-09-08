@@ -39,6 +39,11 @@
         <PackageReference Include="Hardened.Templates.RazorBlade" />
         <PackageReference Include="Hardened.Web.Runtime" />
         <PackageReference Include="Microsoft.Extensions.Primitives" />
+        <PackageReference Include="System.Text.Json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="LambdaWidgets.Runtime.Tests" />
     </ItemGroup>
 
 </Project>

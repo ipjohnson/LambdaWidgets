@@ -250,6 +250,72 @@ restoring those packages. The Lambda pages are untouched.
 
 ---
 
+## F-09  A transport with a query string and no cookies has no conformance profile   2026-09-07
+
+    Side: framework     Where it belongs: Hardened.Framework
+
+`IPayloadAdapter` says a CloudWatch widget is web-shaped, and the shape "decides which conformance
+profile the adapter enrols in". A widget cannot enrol in the web one.
+
+`ExecutionRequestConformanceTests` adds three assertions over the payload profile:
+`QueryStringIsSurfaced`, `QueryStringValuesArriveDecoded` and `CookiesAreSurfaced`. A widget
+satisfies the first two — its merged parameters are exactly a query string, and it is the only
+channel a `[FromQueryString]` parameter has. It cannot satisfy the third: the console sends no
+header of any kind, and a direct invocation's one header-like channel is the SDK caller's client
+context, which the console does not set.
+
+So the split is two profiles for three cases. The choices are to enrol in the payload profile and
+lose the two query assertions that do apply, or to give the request a cookie list it never carries
+so a suite passes. Neither is right, and the second is worse: a conformance suite that can be
+satisfied by inventing a channel is asserting less than it looks like it is.
+
+**Fix:** split `CookiesAreSurfaced` out the way the query assertions were already split out, so a
+transport enrols in what it can answer. The comment on `ExecutionRequestConformanceTests` makes the
+same argument for the existing split — "a skipped test is one this repository fails CI on" — and
+this is the same problem one case further along.
+
+**Worked around here:** enrolled in `PayloadExecutionRequestConformanceTests`, with the two web
+assertions that apply written out in `WidgetRequestConformanceTests` rather than lost.
+
+    PR: none yet
+
+---
+
+## F-10  A transport whose GET carries a body has no way to say so   2026-09-07
+
+    Side: framework     Where it belongs: Hardened.Framework
+
+`HRDR010` refuses a complex parameter on a `[Get]` handler:
+
+    Parameter 'request' of 'Pages.Search' is read from the request body, and a GET carries none, so
+    a request that sends no body is refused before the handler runs and the published document
+    gives the operation a body it should not have.
+
+Both halves are true of HTTP and neither is true of a widget. Its `GET` is a scheme label rather
+than a method — the console sends no method at all, and the verb is what puts a widget's pages in
+the generated `Links` and `Routes` types. There is no client that could omit a body, because the
+adapter writes it. And a widget publishes no OpenAPI document.
+
+The diagnostic offers three ways out: `[FromQueryString]`, `[FromServices]`, or suppression. The
+first is per-parameter and gives up the request object the whole design is written around; the
+third silences a rule rather than answering it.
+
+**Not a defect, and worth an entry anyway.** The rule is right for every transport the framework
+ships, and a non-HTTP transport reusing the web verbs is a case it has not met. The gap is that
+there is no way for a transport to declare that its GET does carry a body, so every such transport
+either suppresses the rule or works around it.
+
+**Worked around here, and it turned out to be the better design.** `[FromWidget]` implements
+`ICustomBindingAttribute`, which is a source of its own, so `HRDR010` does not apply. The attribute
+then says at the handler what is happening rather than leaving it to a suppression in a props file,
+and it binds through `ISerializationLocatorService` rather than reflecting over the parameter type —
+so it stays AOT-safe and inherits `AllowReadingFromString`, which is what makes a form field's
+`"20"` arrive as an `int`.
+
+    PR: none yet
+
+---
+
 # Day-one checks
 
 Section 11 of the plan. Each is recorded here with what was observed.
