@@ -165,6 +165,12 @@ jobs:
   image:
     runs-on: ubuntu-latest
 
+    # The buildx action otherwise uploads a .dockerbuild record as a workflow artifact, which
+    # nothing here reads and which publish then has to download.
+    env:
+      DOCKER_BUILD_RECORD_UPLOAD: false
+      DOCKER_BUILD_SUMMARY: false
+
     steps:
       - uses: actions/checkout@v4
 
@@ -211,9 +217,17 @@ jobs:
       NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: The binaries
+        uses: actions/download-artifact@v4
         with:
+          pattern: lambda-widgets-*
           path: artifacts
+
+      - name: The packages
+        uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: artifacts/packages
 
       - name: Release
         if: ${{ github.ref_type == 'tag' }}
