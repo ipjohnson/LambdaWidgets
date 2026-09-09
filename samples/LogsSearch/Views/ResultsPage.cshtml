@@ -1,5 +1,10 @@
 @inherits LogsSearch.LogsSearchAppWidgetTemplates<LogsSearch.SearchPage>
-@Widget.Root()
+@(new Styles())
+@* The results table is only on this page, so its CSS is only on this page. *@
+<style>
+  .ls-rows th { position: sticky; top: 0; }
+  .ls-rows td { white-space: nowrap; }
+</style>
 <form>
   <input name="logGroups" value="@Model.LogGroups" size="60">
   <textarea name="query" rows="4">@Model.Query</textarea>
@@ -7,10 +12,10 @@
 @Widget.Button("Run query", Links.Pages.Search(), primary: true)
 @Widget.Link("Back", Links.Pages.Index())
 @if (Model.Results is null || Model.Results.Rows.Count == 0) {
-  <p>No rows. Status @(Model.Results?.Status ?? "none").</p>
+  <p class="ls-empty">No rows. Status @(Model.Results?.Status ?? "none").</p>
 } else {
-  <p>@Model.Results.Rows.Count row(s), @Model.Results.Scanned record(s) scanned.</p>
-  <table>
+  <p class="ls-meta">@Model.Results.Rows.Count row(s), @Model.Results.Scanned record(s) scanned.</p>
+  <table class="ls-rows">
     <tr>@foreach (var field in Model.Results.Rows[0].Fields) {<th>@field.Field</th>}</tr>
     @foreach (var row in Model.Results.Rows) {
       <tr>@foreach (var field in row.Fields) {<td>@field.Value</td>}</tr>
@@ -22,4 +27,3 @@
     }
   </table>
 }
-@Widget.EndRoot()

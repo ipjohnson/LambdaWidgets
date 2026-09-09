@@ -1,5 +1,4 @@
 @inherits WidgetName.WidgetNameAppWidgetTemplates<WidgetName.LookupPage>
-@Widget.Root()
 <form>
   <input name="partitionKey" value="@Model.PartitionKey" size="40">
   <input name="sortPrefix" value="@Model.SortPrefix" size="40">
@@ -21,4 +20,3 @@
     @Widget.Link("Next", Links.Pages.LookUp(), ("cursor", Model.Page.Cursor))
   }
 }
-@Widget.EndRoot()

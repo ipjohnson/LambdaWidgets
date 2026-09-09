@@ -1,7 +1,5 @@
 @inherits LambdaWidgets.Testing.Tests.SearchWidgetWidgetTemplates<LambdaWidgets.Testing.Tests.SearchPage>
-@Widget.Root()
 <p class="results">@Model.Results</p>
 <form><textarea name="query">@Model.Query</textarea></form>
 @Widget.Button("Run query", "/search", primary: true)
 @Widget.Link("Back", "/")
-@Widget.EndRoot()

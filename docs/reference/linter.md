@@ -30,3 +30,20 @@ See [cwdb-action](/reference/cwdb-action).
 
 - An `endpoint` whose function name has no configured target. In the console this is a failed
   invoke; in the harness it is a finding before you click.
+
+## CSS that reaches other widgets
+
+- A stylesheet rule whose selector does not lead with a class or an id of your own — `td { }`,
+  `svg { }`, `table.rows td { }`. Every widget on a dashboard shares one page, so these can match
+  whatever the widgets beside yours rendered.
+
+This is the one advisory rule here. Everything above is a defect; this one depends on a question
+nobody has answered. AWS's own samples write bare `td { }` freely, which only works if the console
+scopes each widget's stylesheet to that widget, and nothing AWS publishes says it does.
+
+The rule assumes it does not, because the two ways of being wrong are not symmetric. If the console
+does isolate and we warn anyway, you ignore a finding. If it does not and we stay quiet, you ship a
+widget that restyles a colleague's on a shared dashboard and hear about it from the colleague.
+
+`.rows td { }` is correct either way, so the fix costs nothing. See [status](/status) for the probe
+that settles it.

@@ -49,7 +49,7 @@ public class HarnessRoutes(IWidgetHarness harness) {
     [Get("/widgets/{id}")]
     [Output<Views.WidgetPanel>]
     public async Task<WidgetPanel> Open(string id, CancellationToken cancellationToken) =>
-        new(id, await harness.Open(id, cancellationToken));
+        new(id, await harness.Open(id, cancellationToken), harness.State.Theme);
 
     /// <param name="index">Which of the shown widget's actions the viewer fired.</param>
     /// <param name="fields">
@@ -63,12 +63,12 @@ public class HarnessRoutes(IWidgetHarness harness) {
         int index,
         [FromBody] Dictionary<string, string> fields,
         CancellationToken cancellationToken) =>
-        new(id, await harness.Click(id, index, fields, cancellationToken));
+        new(id, await harness.Click(id, index, fields, cancellationToken), harness.State.Theme);
 
     [Post("/widgets/{id}/describe")]
     [Output<Views.WidgetPanel>]
     public async Task<WidgetPanel> Describe(string id, CancellationToken cancellationToken) =>
-        new(id, await harness.Describe(id, cancellationToken));
+        new(id, await harness.Describe(id, cancellationToken), harness.State.Theme);
 
     /// <summary>
     /// A dashboard control moved, so every widget that asked to hear about it is re-invoked.
@@ -85,5 +85,9 @@ public class HarnessRoutes(IWidgetHarness harness) {
 /// <summary>The whole dashboard.</summary>
 public record DashboardPage(IWidgetHarness Harness);
 
-/// <summary>One widget, and what it last answered.</summary>
-public record WidgetPanel(string Id, WidgetView View);
+/// <summary>One widget, what it last answered, and the theme to render it under.</summary>
+/// <remarks>
+/// The theme is on the panel rather than read off the harness in the view, because the classes it
+/// selects are the console's and belong to the container the harness draws, not to the widget.
+/// </remarks>
+public record WidgetPanel(string Id, WidgetView View, Theme Theme);

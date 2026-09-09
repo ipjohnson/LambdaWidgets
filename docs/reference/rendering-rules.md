@@ -49,3 +49,43 @@ Put behaviour in `cwdb-action`, never in an event-handler attribute. `onclick` i
 
 Check what was stripped rather than assuming. The harness's inspector lists every removal, and the
 [linter](/reference/linter) reports the ones that are always mistakes.
+
+## Stylesheets
+
+A `<style>` block is allowed anywhere in the returned HTML, and there is no separate stylesheet to
+link — a widget serves no static files. Every response therefore carries the CSS it needs, and a
+re-invocation replaces the previous response wholesale.
+
+The default styling applies to `table`, `select`, `h1` to `h3`, `pre`, `input` and `textarea`, plus
+`btn` and `btn btn-primary` on an anchor. A single element anywhere in the returned HTML carrying
+`cwdb-no-default-styles` turns all of it off for that widget. AWS's docs put that class on a
+`<span>`; their own samples put it on the `<table>` being overridden. Either works — it is a
+property of the document, not of the element.
+
+`:hover` is documented as supported: *"HTML can include CSS selectors such as `:hover` which can
+trigger animations or different CSS effects."*
+
+### The container is the console's, not the widget's
+
+The console wraps the returned HTML in a container it owns and puts its theme class on it. The one
+confirmed name is **`cwdb-theme-dark`**, which AWS's `costExplorerReport` sample selects on as an
+ancestor:
+
+```css
+.cwdb-theme-dark td, .cwdb-theme-dark th { color: white; background-color: #2A2E33; }
+```
+
+A widget writes no wrapper of its own; one would be inert in production. The harness reproduces this
+by putting `cwdb-theme-dark` on the element it renders a widget into.
+
+### Whether one widget's CSS reaches another is unverified
+
+Every AWS sample writes bare, unscoped selectors — `td { white-space: nowrap }`, and
+`cloudWatchMetricDataTable` goes as far as `td,th{font-family:Arial;font-size:12px;text-align:center}`.
+Two of those on one dashboard would visibly wreck each other unless the console scopes each widget's
+stylesheet to that widget. Shadow DOM per widget would explain it, and would also explain why
+`cwdb-no-default-styles` acts per widget. Nothing AWS publishes says so.
+
+The harness assumes the pessimistic case and does not isolate, because an author who ships a widget
+that breaks a colleague's on a shared dashboard finds out from the colleague. See
+[status](/status) for the probe that settles it.

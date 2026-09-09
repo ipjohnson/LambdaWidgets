@@ -1,0 +1,16 @@
+@inherits RazorBlade.HtmlTemplate
+@*
+  The widget's shared stylesheet, written once and included by every page.
+
+  A partial rather than a helper: it is an ordinary RazorBlade template, so it composes the way any
+  other view does and a page that wants more adds its own <style> after it. There is nothing to
+  close and nothing to remember beyond the one line that includes it.
+
+  Selectors are prefixed because a widget's CSS is global to the dashboard page. Whether the console
+  isolates each widget is unverified - AWS's own samples write bare `td { }`, which only works if it
+  does - so this assumes it does not. See day-one check 3.
+*@
+<style>
+  .ls-meta { color: #687078; font-size: 12px; margin: 4px 0; }
+  .ls-empty { color: #687078; font-style: italic; }
+</style>

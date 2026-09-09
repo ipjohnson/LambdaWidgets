@@ -1,5 +1,4 @@
 @inherits WidgetName.WidgetNameAppChartTemplates<WidgetName.GraphPage>
-@Widget.Root()
 @if (Model.Detail is not null) {
   @Widget.Link("← Back", Links.Pages.Index())
 }
@@ -7,4 +6,3 @@
    a conditional around it. *@
 @Draw(Model.Over)
 @Draw(Model.Totals)
-@Widget.EndRoot()

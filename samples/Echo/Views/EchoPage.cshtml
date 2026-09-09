@@ -1,5 +1,4 @@
 @inherits Echo.EchoAppWidgetTemplates<Echo.EchoPage>
-@Widget.Root()
 @Html.Raw(Model.Echo)
 <h3>widgetContext</h3>
 <pre>dashboard   @Model.Context.DashboardName
@@ -10,4 +9,3 @@ period      @Model.Context.Period.Seconds s@(Model.Context.Period.IsAutomatic ? 
 time range  @Model.Context.TimeRange.Effective.Start.ToString("u") to @Model.Context.TimeRange.Effective.End.ToString("u")
 size        @Model.Context.Width x @Model.Context.Height
 invoked as  @Model.Context.InvokedFunctionArn</pre>
-@Widget.EndRoot()

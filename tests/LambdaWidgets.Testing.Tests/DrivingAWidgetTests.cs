@@ -151,11 +151,16 @@ public class DrivingAWidgetTests {
 
     // ------------------------------------------------------------------ the dashboard, and describe
 
+    /// <summary>
+    /// The theme arrives as a value the widget reads, not as a class written around it. The console
+    /// puts its own theme class on the container it owns, so a widget that wants different colours
+    /// resolves them here and writes them in.
+    /// </summary>
     [HardenedTest]
     public async Task TheDashboardsThemeReachesTheWidget(IWidgetDriver widget) {
         widget.State = widget.State with { Theme = Theme.Dark };
 
-        Assert.Contains("lw-dark", (await widget.Open()).Html);
+        Assert.Contains("Theme: Dark", (await widget.Open()).Html);
     }
 
     /// <summary>
