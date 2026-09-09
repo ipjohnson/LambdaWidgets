@@ -49,6 +49,18 @@ public sealed class WidgetHelpers {
     internal WidgetHelpers(IWidgetContext context) => _context = context;
 
     /// <summary>
+    /// The dashboard as it reached this widget: theme, time range, period, and the widget's own
+    /// parameters.
+    /// </summary>
+    /// <remarks>
+    /// A view needs this most often for the theme. The console wraps a widget in a container
+    /// carrying its own theme class, so a widget writes no wrapper and no theme class of its own;
+    /// a view that wants different colours reads them from here and writes them in, the way the
+    /// charts do.
+    /// </remarks>
+    public IWidgetContext Context => _context;
+
+    /// <summary>
     /// An anchor bound to a call: click it and the widget re-invokes at <paramref name="route"/>.
     /// </summary>
     /// <param name="text">What the viewer reads.</param>
@@ -116,17 +128,6 @@ public sealed class WidgetHelpers {
     /// <remarks>The console allows <c>mouseenter</c> only on an <c>html</c> action, never a call.</remarks>
     public IEncodedContent Hover(string html) =>
         Html(html, Display.Popup, "mouseenter");
-
-    /// <summary>
-    /// Opens the widget with a class naming the dashboard's theme, so a widget's own CSS can style
-    /// both without asking.
-    /// </summary>
-    public IEncodedContent Root() =>
-        new HtmlString(
-            $"<div class=\"cwdb-widget {(_context.Theme == WidgetTheme.Dark ? "lw-dark" : "lw-light")}\">");
-
-    /// <summary>Closes what <see cref="Root"/> opened.</summary>
-    public IEncodedContent EndRoot() => new HtmlString("</div>");
 
     private IEncodedContent Call(
         string? before,

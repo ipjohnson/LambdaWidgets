@@ -1,5 +1,4 @@
 @inherits WidgetName.WidgetNameAppWidgetTemplates<WidgetName.LookupPage>
-@Widget.Root()
 <form>
   <label>Partition key</label>
   <input name="partitionKey" value="@Model.PartitionKey" size="40">
@@ -10,4 +9,3 @@
    fails to compile, rather than rendering a button that does nothing. *@
 @Widget.Button("Look up", Links.Pages.LookUp(), primary: true)
 <p>Table @Model.Table</p>
-@Widget.EndRoot()

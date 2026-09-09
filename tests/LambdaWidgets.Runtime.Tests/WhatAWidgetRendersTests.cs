@@ -110,12 +110,22 @@ public class WhatAWidgetRendersTests {
     // ------------------------------------------------------------------ the dashboard's theme
 
     /// <summary>
-    /// So a widget's own CSS can style both without asking the dashboard which it is.
+    /// <summary>
+    /// A widget writes no wrapper of its own.
     /// </summary>
+    /// <remarks>
+    /// The console puts the widget's HTML inside a container it owns and puts the theme class on
+    /// that - <c>cwdb-theme-dark</c>, which AWS's own samples select on as an ancestor. A widget
+    /// that emitted its own container to style against would be emitting something inert in
+    /// production, so the theme reaches a widget through <c>IWidgetContext</c> instead and a widget
+    /// that needs different colours writes them in.
+    /// </remarks>
     [HardenedTest]
-    public async Task TheWidgetOpensWithTheDashboardsTheme(LambdaInvocationHandler handler) {
-        Assert.Contains("lw-dark", await Render(handler, "dark"));
-        Assert.Contains("lw-light", await Render(handler, "light"));
+    public async Task AWidgetWritesNoWrapperOfItsOwn(LambdaInvocationHandler handler) {
+        var html = await Render(handler, "dark");
+
+        Assert.DoesNotContain("cwdb-theme-dark", html);
+        Assert.DoesNotContain("lw-widget", html);
     }
 
     /// <summary>

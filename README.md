@@ -78,7 +78,6 @@ click carried, merged the way the console merges them. `[Output<TView>]` names t
 ```razor
 @* Views/LandingPage.cshtml *@
 @inherits OrdersSearch.OrdersSearchAppWidgetTemplates<OrdersSearch.SearchPage>
-@Widget.Root()
 <form>
   <label>Query</label>
   <textarea name="query" rows="4">@Model.Query</textarea>
@@ -91,7 +90,6 @@ click carried, merged the way the console merges them. `[Output<TView>]` names t
     }
   </table>
 }
-@Widget.EndRoot()
 ```
 
 `@Widget.Button` writes the `cwdb-action` element the console binds a click to, with the function's

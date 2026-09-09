@@ -696,3 +696,68 @@ would answer JSON. It bound a complex parameter on a `[Get]` with no `[FromWidge
 `HRDR010`. And it called `Widget.Link` with a `display:` argument that does not exist.
 
 Rewritten against the code the templates emit, which is checked by CI every run.
+
+## 2026-09-08  What the console actually does with CSS
+
+`Widget.Root()` and `Widget.EndRoot()` are gone. Two calls a view had to pair, and what they bought
+was a `<div class="cwdb-widget lw-light">` — a hook for a stylesheet scope we invented, under a
+class name the console does not use, plus a theme class nothing read.
+
+### Reading AWS's samples settled it
+
+Eleven of AWS's custom widget samples ship a `<style>`, and one of them settles two questions at
+once:
+
+    .cwdb-theme-dark td, .cwdb-theme-dark th { color: white; background-color: #2A2E33; }
+
+`cwdb-theme-dark` is the console's own class, selected on as an *ancestor*. So the console does wrap
+a widget's HTML in a container and does put a theme class on it — and a widget writing its own is
+writing something inert. The harness puts `cwdb-theme-dark` on the element it renders a widget into,
+and the default stylesheet is scoped to `.lw-widget` on the same element, which is honestly named as
+ours rather than pretending to be the console's.
+
+The second thing those samples settle is `:hover`. AWS documents it — *"HTML can include CSS
+selectors such as `:hover`"* — so the chart crosshair rests on documented behaviour rather than a
+gamble, and that caveat came off `charting-data`.
+
+### The question they raise instead
+
+Every AWS sample writes bare unscoped selectors. `td { white-space: nowrap }` in three of them, and
+`cloudWatchMetricDataTable` goes as far as `td,th{font-family:Arial;font-size:12px;text-align:center}`.
+Two of those on one dashboard would visibly wreck each other unless the console scopes each widget's
+stylesheet to that widget. Shadow DOM would explain it, and would explain why
+`cwdb-no-default-styles` acts per widget. Nothing AWS publishes says so.
+
+The two ways of being wrong are not symmetric, which decides what to do. If the console isolates and
+the harness warns anyway, an author ignores a finding. If it does not and the harness stays quiet,
+an author ships a widget that restyles a colleague's and hears it from the colleague. So the linter
+reports selectors that do not lead with a class or an id, marked as the one advisory rule, and the
+probe design in `FINDINGS.md` is now three sharp experiments instead of one vague one.
+
+### CSS composes as partials
+
+A shared stylesheet is an ordinary RazorBlade template included with `@(new Styles())`, and a page
+with furniture of its own adds a second `<style>` after it. Declarative, already in the framework,
+and it does not foreclose build-time scoping later — which is the Blazor answer, and the one to
+reach for if the probe says the console does not isolate.
+
+Layouts also work here; I checked, because RazorBlade's `Layout` is read-only and the MVC
+`@{ Layout = … }` idiom fails with CS0200. The extension point is `CreateLayout()`, sections work,
+and a layout composes base CSS with a per-page `@section`. Worth knowing, not worth adopting for two
+lines of shared CSS.
+
+`WidgetHelpers.Context` is public now. Removing the theme class left a view with no route to the
+theme, and reading the value is the better answer anyway — it is what the charts already do.
+
+### The template check had been passing on stale packages
+
+`templates/verify.sh` packed at a fixed `1.0.0-local`. NuGet resolves from the global cache by id
+and version, so after the first run the generated projects built against whatever `src/` looked like
+that morning. It proved the templates *generated*; it stopped reflecting the library the moment the
+version stopped changing.
+
+Caught by deleting `Root()` and watching three templates that still called it pass. The version is
+`1.0.0-local$(date +%Y%m%d%H%M%S)` now, and the same run then failed with four `CS1061`s, which is
+the mutation test for the check itself.
+
+200 tests, 22 in the generated projects.

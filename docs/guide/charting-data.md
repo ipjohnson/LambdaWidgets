@@ -31,9 +31,7 @@ And the view has `@Draw` beside `@Widget` and `@Links`:
 ```razor
 @* Views/GraphPage.cshtml *@
 @inherits Graph.GraphAppChartTemplates<Graph.GraphPage>
-@Widget.Root()
 @Draw(Model.Requests)
-@Widget.EndRoot()
 ```
 
 ## Describe the chart, do not draw it
@@ -97,10 +95,12 @@ spells out a name the axis had to truncate.
 position. Each readout carries `opacity="0"` and the stylesheet only turns it on, so a console that
 dropped the `<style>` block would show a plain chart rather than every readout at once.
 
-::: warning Unverified
-Whether the console keeps a `<style>` block, and whether it binds a `cwdb-action` inside an `<svg>`,
-are both on the probe's list. Neither is load-bearing: without the stylesheet the chart still draws,
-and the table under it carries the same links as the marks.
+::: warning Partly unverified
+`:hover` is documented — *"HTML can include CSS selectors such as `:hover` which can trigger
+animations or different CSS effects"* — and a `<style>` block is allowed anywhere in the returned
+HTML, so the hover layer rests on documented behaviour. What is still on the probe's list is whether
+a `cwdb-action` binds inside an `<svg>`. That one is not load-bearing: the table under every chart
+carries the same links as the marks.
 :::
 
 Nothing is hover-only. Every chart ships a `<details>` table with every value in it, so the numbers

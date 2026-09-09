@@ -99,7 +99,7 @@ public class WhatTheConsoleShowsTests {
     /// </summary>
     [HardenedTest]
     public void AnHtmlAnswerCarriesTheConsolesDefaultStyles(IWidgetConsole console) {
-        Assert.Contains("cwdb-widget table", console.Shows(Answer("<table></table>"), Ops).Styles);
+        Assert.Contains("lw-widget table", console.Shows(Answer("<table></table>"), Ops).Styles);
     }
 
     [HardenedTest]

@@ -7,6 +7,15 @@ namespace LambdaWidgets.Dashboard;
 /// </summary>
 /// <remarks>
 /// <para>
+/// <b>Scoped to <c>.lw-widget</c>, which whoever renders this puts on the element wrapping the
+/// widget's HTML.</b> The widget writes no wrapper of its own: the console supplies one, and a
+/// widget that emitted a container to be styled against would be emitting something inert in
+/// production. Which class the console actually uses is day-one check 3. The one confirmed name is
+/// <c>cwdb-theme-dark</c>, which AWS's own costExplorerReport sample selects on as an ancestor.
+/// </para>
+/// </remarks>
+/// <remarks>
+/// <para>
 /// A widget that writes a bare <c>&lt;table&gt;</c> gets a styled table in the console and an
 /// unstyled one anywhere else, which is the single largest source of "it looked right locally".
 /// This is the harness's answer to that.
@@ -49,43 +58,43 @@ public sealed class WidgetStyles : IWidgetStyles {
     public static string Default(Theme theme) => theme == Theme.Dark ? Dark : Light;
 
     private const string Shared = """
-        .cwdb-widget { font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.4; }
-        .cwdb-widget h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
-        .cwdb-widget h2 { font-size: 18px; font-weight: 700; margin: 16px 0 8px; }
-        .cwdb-widget h3 { font-size: 16px; font-weight: 700; margin: 14px 0 6px; }
-        .cwdb-widget table { border-collapse: collapse; width: 100%; font-size: 13px; }
-        .cwdb-widget th, .cwdb-widget td { text-align: left; padding: 6px 10px; }
-        .cwdb-widget th { font-weight: 700; }
-        .cwdb-widget pre { font-family: Monaco, Menlo, Consolas, monospace; font-size: 12px; padding: 10px; overflow-x: auto; }
-        .cwdb-widget input, .cwdb-widget textarea, .cwdb-widget select { font: inherit; padding: 4px 8px; border-radius: 2px; }
-        .cwdb-widget textarea { width: 100%; }
-        .cwdb-widget a { text-decoration: none; }
-        .cwdb-widget a:hover { text-decoration: underline; }
-        .cwdb-widget a.btn { display: inline-block; padding: 4px 14px; border-radius: 2px; cursor: pointer; text-decoration: none; font-weight: 700; }
-        .cwdb-widget a.btn:hover { text-decoration: none; }
+        .lw-widget { font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.4; }
+        .lw-widget h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+        .lw-widget h2 { font-size: 18px; font-weight: 700; margin: 16px 0 8px; }
+        .lw-widget h3 { font-size: 16px; font-weight: 700; margin: 14px 0 6px; }
+        .lw-widget table { border-collapse: collapse; width: 100%; font-size: 13px; }
+        .lw-widget th, .lw-widget td { text-align: left; padding: 6px 10px; }
+        .lw-widget th { font-weight: 700; }
+        .lw-widget pre { font-family: Monaco, Menlo, Consolas, monospace; font-size: 12px; padding: 10px; overflow-x: auto; }
+        .lw-widget input, .lw-widget textarea, .lw-widget select { font: inherit; padding: 4px 8px; border-radius: 2px; }
+        .lw-widget textarea { width: 100%; }
+        .lw-widget a { text-decoration: none; }
+        .lw-widget a:hover { text-decoration: underline; }
+        .lw-widget a.btn { display: inline-block; padding: 4px 14px; border-radius: 2px; cursor: pointer; text-decoration: none; font-weight: 700; }
+        .lw-widget a.btn:hover { text-decoration: none; }
         """;
 
     private const string Light = Shared + """
 
-        .cwdb-widget { color: #16191f; background: #ffffff; }
-        .cwdb-widget th { border-bottom: 1px solid #aab7b8; }
-        .cwdb-widget td { border-bottom: 1px solid #eaeded; }
-        .cwdb-widget pre { background: #f2f3f3; }
-        .cwdb-widget input, .cwdb-widget textarea, .cwdb-widget select { border: 1px solid #aab7b8; background: #ffffff; color: #16191f; }
-        .cwdb-widget a { color: #0073bb; }
-        .cwdb-widget a.btn { border: 1px solid #545b64; color: #545b64; background: transparent; }
-        .cwdb-widget a.btn.btn-primary { border-color: #ec7211; background: #ec7211; color: #ffffff; }
+        .lw-widget { color: #16191f; background: #ffffff; }
+        .lw-widget th { border-bottom: 1px solid #aab7b8; }
+        .lw-widget td { border-bottom: 1px solid #eaeded; }
+        .lw-widget pre { background: #f2f3f3; }
+        .lw-widget input, .lw-widget textarea, .lw-widget select { border: 1px solid #aab7b8; background: #ffffff; color: #16191f; }
+        .lw-widget a { color: #0073bb; }
+        .lw-widget a.btn { border: 1px solid #545b64; color: #545b64; background: transparent; }
+        .lw-widget a.btn.btn-primary { border-color: #ec7211; background: #ec7211; color: #ffffff; }
         """;
 
     private const string Dark = Shared + """
 
-        .cwdb-widget { color: #d5dbdb; background: #16191f; }
-        .cwdb-widget th { border-bottom: 1px solid #545b64; }
-        .cwdb-widget td { border-bottom: 1px solid #2a2e33; }
-        .cwdb-widget pre { background: #21252c; }
-        .cwdb-widget input, .cwdb-widget textarea, .cwdb-widget select { border: 1px solid #545b64; background: #21252c; color: #d5dbdb; }
-        .cwdb-widget a { color: #44b9d6; }
-        .cwdb-widget a.btn { border: 1px solid #879596; color: #d5dbdb; background: transparent; }
-        .cwdb-widget a.btn.btn-primary { border-color: #ec7211; background: #ec7211; color: #ffffff; }
+        .lw-widget { color: #d5dbdb; background: #16191f; }
+        .lw-widget th { border-bottom: 1px solid #545b64; }
+        .lw-widget td { border-bottom: 1px solid #2a2e33; }
+        .lw-widget pre { background: #21252c; }
+        .lw-widget input, .lw-widget textarea, .lw-widget select { border: 1px solid #545b64; background: #21252c; color: #d5dbdb; }
+        .lw-widget a { color: #44b9d6; }
+        .lw-widget a.btn { border: 1px solid #879596; color: #d5dbdb; background: transparent; }
+        .lw-widget a.btn.btn-primary { border-color: #ec7211; background: #ec7211; color: #ffffff; }
         """;
 }

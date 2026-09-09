@@ -1,5 +1,5 @@
 @inherits WidgetName.WidgetNameAppWidgetTemplates<WidgetName.SearchPage>
-@Widget.Root()
+@(new Styles())
 <form>
   <label>Log groups</label>
   <input name="logGroups" value="@Model.LogGroups" size="60">
@@ -10,5 +10,4 @@
    fails to compile, rather than rendering a button that does nothing. *@
 @Widget.Button("Run query", Links.Pages.Search(), primary: true)
 @Widget.Confirm("Reset", "Discard the edited query?", Links.Pages.Reset())
-<p>Searching @Model.Context.TimeRange.Effective.Start.ToString("u") to @Model.Context.TimeRange.Effective.End.ToString("u")</p>
-@Widget.EndRoot()
+<p class="w-meta">Searching @Model.Context.TimeRange.Effective.Start.ToString("u") to @Model.Context.TimeRange.Effective.End.ToString("u")</p>

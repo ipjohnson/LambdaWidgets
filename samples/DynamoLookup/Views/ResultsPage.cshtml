@@ -1,5 +1,4 @@
 @inherits DynamoLookup.DynamoLookupAppWidgetTemplates<DynamoLookup.LookupPage>
-@Widget.Root()
 <form>
   <input name="partitionKey" value="@Model.PartitionKey">
   <input name="sortPrefix" value="@Model.SortPrefix">
@@ -26,4 +25,3 @@
     @Widget.Link("Next", Links.Pages.LookUp(), ("cursor", Model.Page.Cursor))
   }
 }
-@Widget.EndRoot()

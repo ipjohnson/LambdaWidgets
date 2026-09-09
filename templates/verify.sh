@@ -9,7 +9,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK="${1:-$(mktemp -d)}"
-VERSION="1.0.0-local"
+# Unique per run, and that is load-bearing. NuGet resolves a package from the global cache by id
+# and version, so repacking the same version leaves an earlier extraction in place and the
+# generated projects build against whatever src/ looked like the first time. This check passed for
+# hours against a stale package after the source it was meant to be verifying had changed.
+VERSION="1.0.0-local$(date +%Y%m%d%H%M%S)"
 FEED="$WORK/feed"
 
 echo "==> packing $VERSION into $FEED"

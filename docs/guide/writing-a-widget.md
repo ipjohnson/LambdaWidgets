@@ -116,7 +116,7 @@ parameters.
 ```razor
 @* Views/LandingPage.cshtml *@
 @inherits OrdersSearch.OrdersSearchAppWidgetTemplates<OrdersSearch.SearchPage>
-@Widget.Root()
+@(new Styles())
 <form>
   <label>Log groups</label>
   <input name="logGroups" value="@Model.LogGroups" size="60">
@@ -125,7 +125,6 @@ parameters.
 </form>
 @Widget.Button("Run query", Links.Pages.Search(), primary: true)
 @Widget.Confirm("Reset", "Discard the edited query?", Links.Pages.Reset())
-@Widget.EndRoot()
 ```
 
 **Inherit the generated base, not `WidgetTemplate<TModel>`.** The generated one is what carries
@@ -137,8 +136,50 @@ every route in the file becomes a literal.
 `route` plus any fields. `@Widget.Link` is the same without the button classes, `@Widget.Confirm`
 adds a confirmation the console enforces, and `@Widget.Detail` opens the result in a popup.
 
-`@Widget.Root()` opens a `div` carrying the dashboard's theme as a class, so the widget's own CSS
-can style light and dark without asking.
+## Stylesheets
+
+**A widget writes no wrapper of its own.** The console puts the returned HTML inside a container it
+owns and puts its own theme class on that — `cwdb-theme-dark`, which AWS's own samples select on as
+an ancestor. A widget that emitted a container to style against would be emitting something inert in
+production.
+
+Shared CSS is a partial, which is an ordinary RazorBlade template:
+
+```razor
+@* Views/Styles.cshtml *@
+@inherits RazorBlade.HtmlTemplate
+<style>
+  .w-meta { color: #687078; font-size: 12px; }
+</style>
+```
+
+Every page includes it in one line, and a page with furniture of its own adds a second block:
+
+```razor
+@inherits OrdersSearch.OrdersSearchAppWidgetTemplates<OrdersSearch.SearchPage>
+@(new Styles())
+@* The results table is only on this page, so its stylesheet is only on this page. *@
+<style>
+  .w-rows td { white-space: nowrap; }
+</style>
+```
+
+The console allows a `<style>` anywhere in the returned HTML and there is no separate stylesheet to
+link, so every response carries the CSS it needs and nothing accumulates.
+
+**Prefix your selectors.** A widget's CSS is global to the dashboard page, and whether the console
+isolates each widget is [unverified](/status): AWS's own samples write bare `td { }`, which only
+works if it does. Writing `.w-rows td { }` is correct either way, and the harness's linter reports
+selectors that are not.
+
+For the theme, read the value rather than styling on a class:
+
+```razor
+@if (Widget.Context.Theme == WidgetTheme.Dark) { … }
+```
+
+That is what the charts do — they resolve the palette on the server and write the colours in, so
+there is no second theme's rules to ship or to drift.
 
 ### The route argument is never a literal
 

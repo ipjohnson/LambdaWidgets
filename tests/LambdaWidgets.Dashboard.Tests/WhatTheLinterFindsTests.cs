@@ -101,6 +101,57 @@ public class WhatTheLinterFindsTests {
         Assert.Empty(Linter.Lint("""<input type="submit" value="Go">"""));
     }
 
+    // ------------------------------------------------------------------ CSS that reaches too far
+
+    /// <summary>
+    /// Every widget on a dashboard shares one page, so a bare element selector restyles whatever
+    /// its neighbours rendered. AWS's own samples write these, which only works if the console
+    /// isolates each widget - and nothing AWS publishes says it does.
+    /// </summary>
+    [Theory]
+    [InlineData("<style>td { white-space: nowrap; }</style>")]
+    [InlineData("<style>table.rows td { color: red; }</style>")]
+    [InlineData("<style>svg { height: 100%; }</style>")]
+    [InlineData("<style>h2, .panel { margin: 0; }</style>")]
+    public void ASelectorThatCanMatchAnotherWidgetIsReported(string html) {
+        Assert.Equal(WidgetLinter.UnscopedSelector, Rule(html));
+    }
+
+    /// <summary>A selector confined by a class of the widget's own reaches nothing else.</summary>
+    [Theory]
+    [InlineData("<style>.rows td { white-space: nowrap; }</style>")]
+    [InlineData("<style>#chart-1 .bar { fill: red; }</style>")]
+    [InlineData("<style>.a td, .b th { padding: 0; }</style>")]
+    [InlineData("<style>.card > .title { font-weight: 700; }</style>")]
+    public void AScopedSelectorIsNotReported(string html) {
+        Assert.Empty(Linter.Lint(html));
+    }
+
+    /// <summary>
+    /// An at-rule's prelude is a condition rather than a selector, and the rules inside it are
+    /// judged on their own.
+    /// </summary>
+    [Fact]
+    public void AMediaQueryIsJudgedByWhatIsInsideIt() {
+        Assert.Empty(Linter.Lint("<style>@media (min-width: 400px) { .rows td { padding: 0; } }</style>"));
+
+        Assert.Equal(
+            WidgetLinter.UnscopedSelector,
+            Rule("<style>@media (min-width: 400px) { td { padding: 0; } }</style>"));
+    }
+
+    /// <summary>The same selector twice is one thing to fix, not two.</summary>
+    [Fact]
+    public void ARepeatedSelectorIsReportedOnce() {
+        Assert.Single(Linter.Lint("<style>td { color: red; } td { padding: 0; }</style>"));
+    }
+
+    /// <summary>A selector inside a comment is not a rule.</summary>
+    [Fact]
+    public void ACommentedOutSelectorIsNotReported() {
+        Assert.Empty(Linter.Lint("<style>/* td { color: red; } */ .rows td { color: blue; }</style>"));
+    }
+
     // ------------------------------------------------------------------ nothing wrong
 
     /// <summary>
@@ -117,6 +168,7 @@ public class WhatTheLinterFindsTests {
             </cwdb-action>
             <a>What does this do?</a>
             <cwdb-action display="popup"><b>It searches logs.</b></cwdb-action>
+            <style>.w-rows td { white-space: nowrap; }</style>
             """));
     }
 

@@ -373,15 +373,25 @@ The model to read for item 2 is now in Hardened.Framework rather than Amz: `IPay
 
 Everything it settles is marked **unverified** in `docs/reference/` until it runs.
 
-What it has to answer has grown with the charts work, and these three are new:
+What it has to answer has grown, and the CSS half of it is now the sharpest part.
 
-- **Does a `<style>` block survive?** The rendering rules say yes and nothing has tested it. The
-  chart hover layer is CSS, so this decides whether pointing at a chart does anything. It is not
-  load-bearing: the readouts carry `opacity="0"` and the stylesheet only reveals them, so a console
-  that dropped the block draws a plain chart rather than thirty overlapping readouts.
+- **Does one widget's CSS reach another?** Deploy Echo twice on one dashboard. Give A the parameter
+  `<style>td{background:#f00}</style><table><tr><td>A</td></tr></table>` and B just
+  `<table><tr><td>B</td></tr></table>`. If B's cell is red there is no isolation. This is the one
+  that decides whether the linter's unscoped-selector rule is advice or a hard error, and whether
+  build-time scoping is worth building.
+- **If it is isolated, by what?** Open devtools on that dashboard: a shadow root shows in the
+  elements panel and settles the mechanism outright. Shadow DOM would also explain why
+  `cwdb-no-default-styles` acts per widget rather than per dashboard.
+- **Which side of the boundary is `cwdb-theme-dark` on?** Have A emit
+  `.cwdb-theme-dark td{background:#0f0}` and view the dashboard in dark mode. The class is confirmed
+  real; whether a widget's own stylesheet can select on it as an ancestor is not.
 - **Does a `cwdb-action` bind inside an `<svg>`?** Our interpreter binds the previous element
   sibling wherever it is. If the console does not, clicking a column does nothing — which is why
   every chart also puts the same links in the table beneath it.
+
+`<style>` itself is no longer in question: AWS documents that a stylesheet can be included anywhere
+in the returned HTML, and that `:hover` works.
 - **What does `widgetContext.width`/`height` carry?** The interpreter passes the dashboard body's
   grid units straight through as pixels, which cannot both be right. A chart sizes itself from the
   `viewBox` and does not care, but the harness's fidelity does.

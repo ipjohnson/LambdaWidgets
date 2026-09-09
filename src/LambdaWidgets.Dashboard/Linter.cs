@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 
@@ -33,7 +34,7 @@ public interface IWidgetLinter {
 }
 
 /// <inheritdoc />
-public sealed class WidgetLinter : IWidgetLinter {
+public sealed partial class WidgetLinter : IWidgetLinter {
     /// <summary>An element the console removes, with everything in it.</summary>
     public const string RemovedElement = "removed-element";
 
@@ -57,6 +58,17 @@ public sealed class WidgetLinter : IWidgetLinter {
 
     /// <summary>A field with no <c>name</c>, which never reaches <c>forms.all</c>.</summary>
     public const string FieldWithoutName = "field-without-name";
+
+    /// <summary>
+    /// A stylesheet rule whose selector can match another widget's content.
+    /// </summary>
+    /// <remarks>
+    /// Advice rather than a defect, and the only rule here that is. Whether the console isolates
+    /// each widget's stylesheet is unverified: AWS's own samples write bare <c>td { }</c>, which
+    /// only works if it does. This assumes it does not, because an author who ships a widget that
+    /// restyles a colleague's on a shared dashboard hears about it from the colleague.
+    /// </remarks>
+    public const string UnscopedSelector = "unscoped-selector";
 
     private readonly IWidgetActions _actions;
     private readonly IWidgetSanitizer _sanitizer;
@@ -97,6 +109,7 @@ public sealed class WidgetLinter : IWidgetLinter {
         }
 
         findings.AddRange(UnnamedFields(html));
+        findings.AddRange(UnscopedSelectors(html));
 
         return findings;
     }
@@ -131,6 +144,72 @@ public sealed class WidgetLinter : IWidgetLinter {
     /// A field with no name never reaches the function, which is invisible: the field renders, the
     /// viewer types in it, the click carries everything except that.
     /// </remarks>
+    /// <summary>
+    /// Rules that would match outside this widget if the console does not isolate it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A selector is treated as scoped when every one of its compound parts leads with a class or
+    /// an id. <c>.rows td</c> is scoped; <c>td</c> and <c>table.rows</c> are not, because both can
+    /// match markup the widget did not write.
+    /// </para>
+    /// <para>
+    /// Deliberately coarse. It reads selectors with a regular expression rather than a CSS parser,
+    /// skips at-rule preludes, and reports each distinct selector once. A rule that tried to be
+    /// exact here would be a CSS parser, and the finding is advice either way.
+    /// </para>
+    /// </remarks>
+    private static IEnumerable<Finding> UnscopedSelectors(string html) {
+        var document = new HtmlParser().ParseDocument(html);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var sheet in document.QuerySelectorAll("style")) {
+            // Comments first: a selector inside one is not a rule, and the body is scanned as text.
+            var css = Comments().Replace(sheet.TextContent, " ");
+
+            foreach (Match rule in Selectors().Matches(css)) {
+                var prelude = rule.Groups["selector"].Value.Trim();
+
+                // An at-rule's prelude is a condition, not a selector. Its inner rules are matched
+                // separately by the same pass, because the body is scanned as text.
+                if (prelude.Length == 0 || prelude.StartsWith('@')) {
+                    continue;
+                }
+
+                foreach (var selector in prelude.Split(',', StringSplitOptions.TrimEntries)) {
+                    if (selector.Length == 0 || Scoped(selector) || !seen.Add(selector)) {
+                        continue;
+                    }
+
+                    yield return new Finding(
+                        UnscopedSelector,
+                        $"'{selector}' can match other widgets on the same dashboard. Every widget " +
+                        "on a dashboard shares one page, and whether the console isolates their " +
+                        "stylesheets is unverified. Lead each part with a class of your own.",
+                        selector);
+                }
+            }
+        }
+    }
+
+    /// <remarks>
+    /// Every compound part has to lead with a class or an id. <c>.rows td</c> passes because the
+    /// first part confines it; <c>td .cell</c> does not, because <c>td</c> matches on its own.
+    /// </remarks>
+    private static bool Scoped(string selector) {
+        var first = selector.Split([' ', '>', '+', '~'], StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault();
+
+        return first is { Length: > 0 } && (first[0] == '.' || first[0] == '#');
+    }
+
+    [GeneratedRegex(@"/\*.*?\*/", RegexOptions.Singleline)]
+    private static partial Regex Comments();
+
+    /// <summary>A rule's prelude: everything up to the brace that opens its body.</summary>
+    [GeneratedRegex(@"(?<selector>[^{}]+)\{", RegexOptions.Singleline)]
+    private static partial Regex Selectors();
+
     private static IEnumerable<Finding> UnnamedFields(string html) {
         var document = new HtmlParser().ParseDocument(html);
 

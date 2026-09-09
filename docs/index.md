@@ -69,12 +69,10 @@ public class Pages(ILogQueries queries) {
 ```razor
 @* Views/LandingPage.cshtml *@
 @inherits OrdersSearch.OrdersSearchAppWidgetTemplates<OrdersSearch.SearchPage>
-@Widget.Root()
 <form>
   <textarea name="query" rows="4">@Model.Query</textarea>
 </form>
 @Widget.Button("Run query", Links.Pages.Search(), primary: true)
-@Widget.EndRoot()
 ```
 
 `@Widget.Button` writes the `cwdb-action` element the console binds a click to.

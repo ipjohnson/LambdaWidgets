@@ -1,5 +1,4 @@
 @inherits LambdaWidgets.Runtime.Tests.WidgetTestAppWidgetTemplates<LambdaWidgets.Runtime.Tests.Results>
-@Widget.Root()
 <h1>@Model.Title</h1>
 <form>
   <input name="query" value="@Model.Query">
@@ -9,4 +8,3 @@
 @Widget.Confirm("Reset", "Discard the edited query?", "/search", false, ("reset", "true"))
 <a>What does this do?</a>
 @Widget.Popup("<b>It searches logs.</b>")
-@Widget.EndRoot()

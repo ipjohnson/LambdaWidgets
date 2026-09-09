@@ -1,11 +1,10 @@
 @inherits LambdaWidgets.Testing.Tests.SearchWidgetWidgetTemplates<LambdaWidgets.Testing.Tests.SearchPage>
-@Widget.Root()
 <form>
   <textarea name="query">@Model.Query</textarea>
   <input name="limit" value="20">
 </form>
 @Widget.Button("Run query", "/search", primary: true)
 @Widget.Confirm("Reset", "Discard the edited query?", "/reset")
+<p>Theme: @Widget.Context.Theme</p>
 <a>What does this do?</a>
 @Widget.Popup("<b>It searches logs.</b>")
-@Widget.EndRoot()
