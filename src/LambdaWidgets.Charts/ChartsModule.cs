@@ -44,7 +44,7 @@ public abstract class ChartTemplate<TModel> : WidgetTemplate<TModel> {
     private IChartRenderer? _renderer;
     private IWidgetContext? _widget;
 
-    /// <summary>Writes a chart, resolved for the dashboard's own theme.</summary>
+    /// <summary>Writes a chart, resolved for the dashboard's own theme and the widget's own size.</summary>
     /// <remarks>
     /// Null draws nothing, so a view can hold a chart the handler chose not to fill without
     /// wrapping every one of them in a condition.
@@ -60,7 +60,10 @@ public abstract class ChartTemplate<TModel> : WidgetTemplate<TModel> {
         return new HtmlString(_renderer.Render(
             chart,
             _widget.Theme == WidgetTheme.Dark ? ChartTheme.Dark : ChartTheme.Light,
-            _widget.InvokedFunctionArn));
+            _widget.InvokedFunctionArn,
+            // The widget's own width, which the event carries and nothing used to read. A chart
+            // drawn at a fixed 640 fills under half of a 24-column widget.
+            ChartSize.For(_widget.Width)));
     }
 }
 

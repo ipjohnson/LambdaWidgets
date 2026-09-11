@@ -61,6 +61,10 @@ internal sealed class Drawing {
         Readout(band).Descendants().Where(one => one.Name.LocalName == "text")
             .Select(one => one.Value).ToList();
 
+    /// <summary>Every element of a kind, for an assertion about the frame rather than the data.</summary>
+    public IEnumerable<XElement> All(string name) =>
+        _svg.Descendants().Where(one => one.Name.LocalName == name);
+
     public IEnumerable<string> Text =>
         _svg.Descendants().Where(one => one.Name.LocalName == "text").Select(one => one.Value);
 }

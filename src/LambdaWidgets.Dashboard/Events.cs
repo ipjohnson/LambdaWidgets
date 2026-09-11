@@ -258,7 +258,33 @@ public sealed class WidgetEvents : IWidgetEvents {
             Title = widget.Title,
             Forms = forms,
             Params = widget.Params,
-            Width = widget.Width,
-            Height = widget.Height
+            Width = Pixels(widget.Width, DefaultWidth),
+            Height = Pixels(widget.Height, DefaultHeight)
         };
+
+    /// <summary>A default widget is six grid units square, and AWS's own sample shows it at 588 by 369.</summary>
+    private const int DefaultUnits = 6;
+
+    private const int DefaultWidth = 588;
+
+    private const int DefaultHeight = 369;
+
+    /// <summary>
+    /// A widget's grid units as the pixels the console sends.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two different numbers wear the same name, and this converts between them.</b> A dashboard
+    /// body holds a widget's size in grid units — the grid is 24 across and a widget is 6 by 6 by
+    /// default — while <c>widgetContext.width</c> and <c>widgetContext.height</c> are pixels. This
+    /// used to copy one into the other, so a 24-column widget told a handler it was 24 pixels wide.
+    ///
+    /// <para>
+    /// The ratio is read off AWS's own sample, which shows the default widget at 588 by 369. It is
+    /// an estimate: the console's grid is responsive and a real widget's pixel size depends on the
+    /// viewer's window. <b>Unverified</b> until day-one check 3 reads a width out of a real
+    /// invocation.
+    /// </para>
+    /// </remarks>
+    private static int Pixels(int units, int perDefaultWidget) =>
+        units <= 0 ? perDefaultWidget : units * perDefaultWidget / DefaultUnits;
 }

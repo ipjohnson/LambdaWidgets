@@ -24,7 +24,8 @@ public sealed record Series(string Name, IReadOnlyList<Reading> Readings);
 /// <b>Three series, and the fourth is folded into "Other".</b> That is the cap the palette
 /// validates all-pairs at in both of the console's themes; a fourth puts yellow beside orange,
 /// which readers with normal vision cannot reliably separate. It is also as many lines as a widget
-/// this size can carry — the default is 588 by 369, and a legend for eight would take a third of it.
+/// this size can carry — AWS's own sample shows a default widget at 588 by 369 pixels, and a legend
+/// for eight would take a third of it.
 /// </para>
 /// <para>
 /// A widget has no hover, because the console strips JavaScript. Everything a tooltip would have
