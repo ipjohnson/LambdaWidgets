@@ -21,4 +21,12 @@ services.AddTransient<IHardenedEnvironment>(_ => new EnvironmentImpl(arguments: 
 
 new LogsSearchApp().PopulateServiceCollection(services);
 
-await HardenedLambdaBootstrap.Run(services.BuildServiceProvider());
+var provider = services.BuildServiceProvider();
+
+// Startup services run here, and nothing else runs them. HardenedLambdaBootstrap.Run resolves the
+// invocation handler and serves the loop; every other Hardened host starts the application first.
+// Without this the describe filter is never installed and the console's Get documentation button
+// answers with the widget's landing page. FINDINGS.md F-11.
+await ApplicationLogic.Start(provider, null);
+
+await HardenedLambdaBootstrap.Run(provider);
