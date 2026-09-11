@@ -761,3 +761,96 @@ Caught by deleting `Root()` and watching three templates that still called it pa
 the mutation test for the check itself.
 
 200 tests, 22 in the generated projects.
+
+
+## 2026-09-11 — A field report, and the decode that was missing
+
+Someone built a real widget on the published packages against DynamoDB Local and wrote up nine
+things. Nothing blocked them, which is the good news; the first finding is the one that mattered.
+
+### The path was escaped on the way out and never unescaped on the way in
+
+`[Get("/shipment/{id}")]` generates `Routes.Detail(id)` as `"/shipment/" + Uri.EscapeDataString(id)`,
+and nothing undid it. Over HTTP a server decodes the path before the route table reads it; a widget
+invocation carries its route as a string inside the action's JSON and has no server in that
+position. So a handler bound `SHIPMENT%23SHP1000` and the lookup quietly found nothing — and every
+key in a single-table DynamoDB design carries a `#`, so it is the first thing that happens to
+anyone using the template it ships with.
+
+Decoded per token rather than over the whole path, which is the part worth writing down. Decoding in
+`WidgetInvocation.Path` is what the report suggested and it would have been wrong: an escaped `%2F`
+would become a real separator and a key holding a slash would stop matching its own route. The route
+table matches the escaped path and `WidgetRequest.PathTokens` decodes each captured value, which is
+the exact inverse of the escape the generated link applied. `Clone` assigns the backing field rather
+than the property, or a key holding a literal `%` loses it on every fork.
+
+### A test could not tell a failed invocation from a successful one
+
+`Assert.Empty(page.Findings)` is the headline assertion in the README, the guide and all three
+templates, and it passed on a widget whose handler threw. A thrown handler serialized an
+`ErrorModel`, the console renders an object it does not recognise as JSON, and the interpreter saw a
+body like any other.
+
+Both halves are fixed and they need each other. The adapter writes an error page rather than an
+object, so an operator gets something designed; the page carries `data-lw-error`, so the interpreter
+can tell it from a widget's own and raise a finding. That attribute is the only thing the runtime
+and the interpreter agree on out of band, and the two packages do not reference each other — kept in
+step by a linter test that writes the markup the runtime writes.
+
+The exception message is behind `WIDGET_ERROR_DETAIL` rather than always on, because the page
+reaches a real dashboard.
+
+### The describe filter had never run in a deployed widget
+
+Found while checking the endpoints for the HTTP API reference, which was documenting a click body
+the endpoint refuses. `POST .../describe` answered with the widget's landing page.
+
+`HardenedLambdaBootstrap.Run` resolves the invocation handler and serves the loop. It never calls
+`ApplicationLogic.Start`, so no `IStartupService` any module registered ever ran. CORS and
+authorization were not running either. The reason it was invisible is worth the entry on its own:
+`[HardenedTestEntryPoint]` **does** start the application, so the same widget answered markdown
+under `IWidgetDriver` and HTML under the Lambda runtime. A green suite proved nothing about the
+deployed function. F-11.
+
+### Two numbers wearing the same name
+
+`WidgetEvents` copied a widget's grid units into `widgetContext.width`, which is pixels. A
+24-column widget told a handler it was 24 across. Nothing read the value, so nothing had noticed —
+and the chart renderer was about to start reading it, which is how it surfaced.
+
+Converted at the ratio AWS's own sample implies, a default six-by-six widget at 588 by 369, and
+marked unverified: the console's grid is responsive and a real widget's pixel size depends on the
+viewer's window. A chart is clamped between 320 and 1200 rather than drawn arbitrarily wide on the
+strength of an estimate.
+
+### A page base and a partial base are different types
+
+The report's third "if only three things" was shared chrome, and the reason it was impossible is
+structural rather than an oversight. A page template is a response output: the pipeline constructs
+it and attaches the handler's model, and the attach is `HardenedHtmlTemplate`'s own private
+business. There is no constructor to call and `Model` has no setter, so a typed partial gives
+`CS1729`, then `CS0200`.
+
+`WidgetPartial<TModel>` is the other half, and RazorBlade already had the mechanism:
+`[TemplateConstructor]` on a base constructor makes its generator emit a matching one on the
+generated class. `WidgetPartial<TModel, TLinks>` takes the application's generated `Links` as a type
+argument rather than waiting on a generator change, so a nav bar's routes stay checked by the
+compiler like every other route here.
+
+### Checked in a browser, and against a running function
+
+The confirmation change could not be tested any other way: `window.confirm` blocks every event the
+page would receive, which is why the harness could not be automated past a confirmed action. Driven
+in Chrome against the Echo sample under the test tool — OK re-invokes, Cancel sends nothing, one
+POST in the log.
+
+The HTTP API reference was rewritten from the responses themselves rather than from the handler
+signatures. Every shape, status and message in it was read off the wire, which is how the widget
+pixel-size bug and the describe bug turned up at all.
+
+The templates now ship a solution file, so the README's `dotnet test` works, and a `global.json`
+with `allowPrerelease: false` — without it a machine holding a .NET 11 preview builds the generated
+project under the preview and prints `NETSDK1057` on every build. `verify.sh` runs the README's own
+commands from the directory it gives them in.
+
+245 tests, 21 in the generated projects.
