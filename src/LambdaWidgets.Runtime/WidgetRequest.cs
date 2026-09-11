@@ -146,9 +146,53 @@ public sealed class WidgetRequest : IExecutionRequest {
 
     public IQueryStringCollection QueryString { get; }
 
+    /// <summary>
+    /// The route's path parameters, percent-decoded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The decode is missing everywhere else, and this is the only place it can happen.</b> The
+    /// generated <c>Routes</c> escape a path argument with <c>Uri.EscapeDataString</c>, so
+    /// <c>Routes.Detail("SHIPMENT#SHP1000")</c> is <c>/shipment/SHIPMENT%23SHP1000</c>. Over HTTP
+    /// the server undoes that before the route table reads the path; a widget invocation carries
+    /// its route as a string inside the action's JSON and has no server in that position, so
+    /// without this a handler binds <c>SHIPMENT%23SHP1000</c> and the lookup quietly finds nothing.
+    /// Every key in a single-table DynamoDB design carries a <c>#</c>, which is the first thing
+    /// that happens to anyone routing on one.
+    /// </para>
+    /// <para>
+    /// <b>Per token rather than over the whole path, and that is the difference that matters.</b>
+    /// Decoding before the match would turn a <c>%2F</c> into a segment separator and a key holding
+    /// a slash would stop matching its own route. The route table matches the escaped path, so an
+    /// escaped separator stays inside one segment, and only the captured value is decoded — which
+    /// makes this the exact inverse of the escape the generated link applied.
+    /// </para>
+    /// </remarks>
     public IPathTokenCollection PathTokens {
         get => _pathTokens ?? PathTokenCollection.Empty;
-        set => _pathTokens = value;
+        set => _pathTokens = Decoded(value);
+    }
+
+    /// <remarks>
+    /// A value with no <c>%</c> in it is returned as it came, so the common route pays nothing and
+    /// a token that was never escaped cannot be changed by this.
+    /// </remarks>
+    private static IPathTokenCollection Decoded(IPathTokenCollection tokens) {
+        if (tokens.Count == 0) {
+            return tokens;
+        }
+
+        var decoded = new PathTokenCollection(tokens.Count);
+
+        for (var index = 0; index < tokens.Count; index++) {
+            var token = tokens.Get(index);
+
+            decoded.Set(index, token.TokenValue.Contains('%', StringComparison.Ordinal)
+                ? token with { TokenValue = Uri.UnescapeDataString(token.TokenValue) }
+                : token);
+        }
+
+        return decoded;
     }
 
     /// <summary>Nothing. There is no header to parse cookies from and no browser to have set one.</summary>
@@ -186,6 +230,8 @@ public sealed class WidgetRequest : IExecutionRequest {
             // them would let one fork overwrite another's. Null stays null, because a request that
             // has not been bound yet has nothing to copy.
             Parameters = Parameters?.Clone(),
-            PathTokens = PathTokens
+            // The field rather than the property, because these are decoded already and the setter
+            // decodes. A token holding a literal percent sign would lose it on every clone.
+            _pathTokens = _pathTokens
         };
 }

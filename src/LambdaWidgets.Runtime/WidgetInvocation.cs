@@ -123,9 +123,17 @@ internal sealed class WidgetInvocation {
     }
 
     /// <remarks>
+    /// <para>
     /// A route arriving without its leading slash is the author's likely mistake rather than a
     /// different route, and the route table has one form. Repairing it here beats a 404 that names
     /// a path the author believes they wrote.
+    /// </para>
+    /// <para>
+    /// The path stays escaped. The route table matches it as it arrived and
+    /// <see cref="WidgetRequest.PathTokens"/> decodes each captured value, because decoding here
+    /// would turn an escaped separator into a real one and a key holding a slash would stop
+    /// matching its own route.
+    /// </para>
     /// </remarks>
     private static string Path(string route) =>
         string.IsNullOrWhiteSpace(route) ? "/"

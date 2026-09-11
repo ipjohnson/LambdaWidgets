@@ -55,6 +55,38 @@ public class WhatAWidgetInvocationDoesTests {
             await Invoke(handler, """{"route":"/rows/42","widgetContext":{}}"""));
     }
 
+    /// <summary>
+    /// The round trip the generated links promise: a value goes out through <c>Routes</c>, which
+    /// escapes it, and arrives at the handler as the value that was passed.
+    ///
+    /// <para>
+    /// Every key in a single-table DynamoDB design carries a <c>#</c>, so this is the first thing
+    /// that happens to anyone routing on one. Without the decode the handler binds
+    /// <c>SHIPMENT%23SHP1000</c> and the lookup finds nothing, which is a widget that renders and
+    /// quietly shows an empty page.
+    /// </para>
+    /// </summary>
+    [HardenedTest]
+    public async Task APathParameterArrivesAsItWasPassed(LambdaInvocationHandler handler) {
+        foreach (var id in new[] { "SHIPMENT#SHP1000", "SHP 1000", "SHP/1000", "100%", "a+b" }) {
+            var route = JsonSerializer.Serialize(WidgetTestApp.Routes.Pages.Row(id));
+
+            Assert.Equal($"<p>row {id}</p>",
+                await Invoke(handler, $$$"""{"route":{{{route}}},"widgetContext":{}}"""));
+        }
+    }
+
+    /// <summary>
+    /// An escaped separator stays inside its own segment, which is what decoding per token rather
+    /// than over the whole path buys. Decoding first would split <c>%2F</c> into a third segment
+    /// and the route would stop matching itself.
+    /// </summary>
+    [HardenedTest]
+    public async Task AnEscapedSlashDoesNotBecomeASecondSegment(LambdaInvocationHandler handler) {
+        Assert.Equal("<p>row a/b</p>",
+            await Invoke(handler, """{"route":"/rows/a%2Fb","widgetContext":{}}"""));
+    }
+
     // ------------------------------------------------------------------ binding
 
     [HardenedTest]
@@ -153,6 +185,31 @@ public class WhatAWidgetInvocationDoesTests {
         var answer = await Invoke(handler, """{"route":"/boom","widgetContext":{}}""");
 
         Assert.DoesNotContain("the widget was not ready", answer);
+    }
+
+    /// <summary>
+    /// With a page, not an object. The console renders a shape it does not recognise as JSON, so a
+    /// widget whose query was throttled would show an operator
+    /// <c>{"type":"ServerError",...}</c> where a designed page belongs.
+    /// </summary>
+    [HardenedTest]
+    public async Task AHandlerThatThrowsAnswersAPage(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """{"route":"/boom","widgetContext":{}}""");
+
+        Assert.DoesNotContain("ServerError", answer);
+        Assert.Contains("This widget could not be rendered.", answer);
+    }
+
+    /// <summary>
+    /// The request id is on it, which is the only thing joining what a viewer saw to the function's
+    /// log — and the marker is what lets a test tell this page from a widget's own.
+    /// </summary>
+    [HardenedTest]
+    public async Task TheErrorPageCarriesTheRequestIdAndTheMarker(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """{"route":"/boom","widgetContext":{}}""");
+
+        Assert.Contains("probe-1", answer);
+        Assert.Contains($"{WidgetErrors.Marker}=\"InvalidOperationException\"", answer);
     }
 
     /// <summary>
