@@ -43,6 +43,34 @@ public class WhatAWidgetRendersTests {
         Assert.Equal("<h1>Log search</h1>", JsonSerializer.Deserialize<string>(raw));
     }
 
+    // ------------------------------------------------------------------ shared chrome
+
+    /// <summary>
+    /// A partial with a model, constructed by a page, with the helpers and the generated links on
+    /// it.
+    ///
+    /// <para>
+    /// The thing a widget past two pages wants most and could not have: a page template is a
+    /// response output the pipeline constructs and attaches a model to, so a typed partial written
+    /// against that base gives CS1729 and then CS0200, and the nav bar gets copied into every page
+    /// instead. A model-less partial worked and could hold CSS and nothing that links anywhere.
+    /// </para>
+    /// </summary>
+    [HardenedTest]
+    public async Task APartialRendersWithTheHelpersAndTheGeneratedLinks(
+        LambdaInvocationHandler handler) {
+        var actions = Actions(await Render(handler)).ToDictionary(one => one.Text);
+
+        var rows = Assert.Contains("Rows", actions);
+
+        // The page's model reached the partial, and the route came from Links rather than a string.
+        Assert.Equal(WidgetTestApp.Routes.Pages.Row("c-2"), rows.Parameters["route"]);
+        Assert.Equal(ActionKind.Call, rows.Kind);
+
+        // And the helpers wrote the endpoint the invocation arrived on, as they do on a page.
+        Assert.Equal("customWidgetEcho", rows.FunctionName);
+    }
+
     // ------------------------------------------------------------------ what the helpers emit
 
     /// <summary>

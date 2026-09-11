@@ -10,8 +10,15 @@ namespace LambdaWidgets.Runtime;
 /// with the <c>cwdb-action</c> helpers attached.
 /// </summary>
 /// <remarks>
+/// <para>
 /// A view does not inherit this directly. It inherits the base the generator emits from
 /// <see cref="WidgetTemplates"/>, which derives from this and adds the application's <c>Links</c>.
+/// </para>
+/// <para>
+/// <b>A page, which is not the same thing as a partial.</b> This base is a response output: the
+/// pipeline constructs it and attaches the handler's model, so there is no constructor a page can
+/// call. Shared chrome inherits <see cref="WidgetPartial{TModel,TLinks}"/> instead.
+/// </para>
 /// </remarks>
 public abstract class WidgetTemplate<TModel> : HardenedHtmlTemplate<TModel> {
     private WidgetHelpers? _widget;
@@ -46,7 +53,16 @@ public abstract class WidgetTemplate<TModel> : HardenedHtmlTemplate<TModel> {
 public sealed class WidgetHelpers {
     private readonly IWidgetContext _context;
 
-    internal WidgetHelpers(IWidgetContext context) => _context = context;
+    /// <summary>
+    /// A template reads <c>Widget</c> rather than constructing one. This is for a handler that
+    /// builds a fragment of markup itself.
+    /// </summary>
+    /// <remarks>
+    /// Public because internal left the helpers reachable only from a template, so a widget that
+    /// wanted one row of shared markup in a handler had to write the <c>cwdb-action</c> by hand —
+    /// which is the one thing the helpers exist to stop anybody doing.
+    /// </remarks>
+    public WidgetHelpers(IWidgetContext context) => _context = context;
 
     /// <summary>
     /// The dashboard as it reached this widget: theme, time range, period, and the widget's own

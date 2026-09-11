@@ -136,6 +136,42 @@ every route in the file becomes a literal.
 `route` plus any fields. `@Widget.Link` is the same without the button classes, `@Widget.Confirm`
 adds a confirmation the console enforces, and `@Widget.Detail` opens the result in a popup.
 
+## Shared chrome
+
+A widget past two pages wants one nav bar, written once. That is a partial with a model:
+
+```razor
+@* Views/Nav.cshtml *@
+@inherits LambdaWidgets.Runtime.WidgetPartial<string, OrdersSearch.OrdersSearchApp.Links>
+<nav>
+  @Widget.Link("Search", Links.Pages.Index())
+  @Widget.Link("Results", Links.Pages.Search())
+  <span>@Model</span>
+</nav>
+```
+
+Every page includes it, passing its model and its own `Context`:
+
+```razor
+@inherits OrdersSearch.OrdersSearchAppWidgetTemplates<OrdersSearch.SearchPage>
+@(new Nav(Model.Query, Context))
+```
+
+**A page base and a partial base are different types, and they have to be.** A page is a response
+output: the pipeline constructs it and attaches the handler's model, so there is no constructor for
+a page to call and no `Model` to set. Inherit `WidgetTemplates` for a page and `WidgetPartial` for
+anything a page includes.
+
+`WidgetPartial<TModel>` is the one to inherit when the partial links nowhere.
+`WidgetPartial<TModel, TLinks>` adds `Links`, and naming the generated type is what keeps a nav
+bar's routes checked by the compiler like every other route here.
+
+A handler that builds a fragment itself constructs the helpers directly:
+
+```csharp
+var widget = new WidgetHelpers(context);
+```
+
 ## Stylesheets
 
 **A widget writes no wrapper of its own.** The console puts the returned HTML inside a container it
@@ -143,7 +179,7 @@ owns and puts its own theme class on that — `cwdb-theme-dark`, which AWS's own
 an ancestor. A widget that emitted a container to style against would be emitting something inert in
 production.
 
-Shared CSS is a partial, which is an ordinary RazorBlade template:
+Shared CSS is a partial with nothing to render but itself, so it needs no model and no links:
 
 ```razor
 @* Views/Styles.cshtml *@

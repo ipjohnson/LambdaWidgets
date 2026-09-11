@@ -1,4 +1,6 @@
 @inherits LambdaWidgets.Runtime.Tests.WidgetTestAppWidgetTemplates<LambdaWidgets.Runtime.Tests.Results>
+@* The shared chrome, written once in Nav.cshtml and included by every page rather than copied. *@
+@(new Nav(Model.Cursor, Context))
 <h1>@Model.Title</h1>
 <form>
   <input name="query" value="@Model.Query">
