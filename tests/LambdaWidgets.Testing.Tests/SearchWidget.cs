@@ -32,6 +32,11 @@ public class Pages {
     [Get("/reset")]
     [Output<Views.LandingPage>]
     public SearchPage Reset() => new("fields @timestamp", Results: null);
+
+    /// <summary>A query that was throttled, which is the ordinary way a real widget fails.</summary>
+    [Get("/throttled")]
+    public string Throttled() =>
+        throw new InvalidOperationException("Throughput exceeded on table deliveries");
 }
 
 public class SearchRequest {

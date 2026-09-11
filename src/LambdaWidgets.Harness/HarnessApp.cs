@@ -90,4 +90,4 @@ public record DashboardPage(IWidgetHarness Harness);
 /// The theme is on the panel rather than read off the harness in the view, because the classes it
 /// selects are the console's and belong to the container the harness draws, not to the widget.
 /// </remarks>
-public record WidgetPanel(string Id, WidgetView View, Theme Theme);
+public record WidgetPanel(string Id, WidgetRender View, Theme Theme);

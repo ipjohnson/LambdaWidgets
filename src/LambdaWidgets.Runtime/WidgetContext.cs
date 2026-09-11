@@ -81,14 +81,33 @@ internal sealed class WidgetContext : IWidgetContext {
     private static readonly Dictionary<string, string> Nothing = new();
 
     /// <summary>
+    /// The dashboard's default window, which is what a payload carrying no time range is given.
+    /// </summary>
+    /// <remarks>
+    /// <b>The same three hours <c>DashboardState</c> defaults to in <c>LambdaWidgets.Dashboard</c>,
+    /// and they have to agree.</b> This used to be a zero-length window at the Unix epoch, so the
+    /// Lambda console's Test button and any hand-written payload gave a handler a range nothing
+    /// could be in — a widget rendering "nothing in this time range" against a full table while
+    /// every test was green, because the test driver sends a real range and never exercised this.
+    /// </remarks>
+    public static readonly TimeSpan DefaultWindow = TimeSpan.FromHours(3);
+
+    /// <summary>
     /// What a payload with no <c>widgetContext</c> gets.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Defaults rather than a throw. The adapter has already decided this payload is a widget's, and
     /// a handler asking for the dashboard's theme when the caller sent none should get "light"
     /// rather than a failed invocation — a hand-written test payload is the common case.
+    /// </para>
+    /// <para>
+    /// <b>A new instance each time, not a cached one.</b> The default window ends now, and a
+    /// sandbox serves invocations for hours: a single instance would hand the tenth invocation the
+    /// window the first one was built with.
+    /// </para>
     /// </remarks>
-    public static WidgetContext Absent { get; } = new();
+    public static WidgetContext Absent => new();
 
     public string DashboardName { get; private init; } = "";
 
@@ -100,8 +119,7 @@ internal sealed class WidgetContext : IWidgetContext {
 
     public (int Seconds, bool IsAutomatic) Period { get; private init; } = (300, true);
 
-    public WidgetTimeRange TimeRange { get; private init; } =
-        new(DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, null);
+    public WidgetTimeRange TimeRange { get; private init; } = DefaultRange();
 
     public WidgetTheme Theme { get; private init; } = WidgetTheme.Light;
 
@@ -160,10 +178,15 @@ internal sealed class WidgetContext : IWidgetContext {
         return values;
     }
 
+    /// <remarks>
+    /// A <c>timeRange</c> with no times in it is treated as one that is not there. The console
+    /// always sends both; a payload that sent neither meant the default rather than 1970.
+    /// </remarks>
     private static WidgetTimeRange ReadTimeRange(JsonElement element) {
         if (!element.TryGetProperty("timeRange", out var range) ||
-            range.ValueKind != JsonValueKind.Object) {
-            return new WidgetTimeRange(DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, null);
+            range.ValueKind != JsonValueKind.Object ||
+            (!Has(range, "start") && !Has(range, "end"))) {
+            return DefaultRange();
         }
 
         (DateTimeOffset, DateTimeOffset)? zoom = null;
@@ -174,6 +197,16 @@ internal sealed class WidgetContext : IWidgetContext {
 
         return new WidgetTimeRange(Instant(range, "start"), Instant(range, "end"), zoom);
     }
+
+    /// <summary>The last <see cref="DefaultWindow"/>, ending now.</summary>
+    private static WidgetTimeRange DefaultRange() {
+        var end = DateTimeOffset.UtcNow;
+
+        return new WidgetTimeRange(end - DefaultWindow, end, null);
+    }
+
+    private static bool Has(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number;
 
     /// <summary>The fields under <c>forms.all</c>, which is where a click's form values arrive.</summary>
     private static IReadOnlyDictionary<string, string> ReadForms(JsonElement element) =>

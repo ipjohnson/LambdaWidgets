@@ -323,6 +323,49 @@ so it stays AOT-safe and inherits `AllowReadingFromString`, which is what makes 
 
 ---
 
+## F-11  HardenedLambdaBootstrap.Run does not start the application   2026-09-11
+
+    Side: framework     Where it belongs: Hardened.Framework
+
+`HardenedLambdaBootstrap.Run(IServiceProvider)` resolves `LambdaInvocationHandler` and serves the
+loop. It never calls `ApplicationLogic.Start`, so no `IStartupService` registered by any module in
+the application ever runs.
+
+Every host but this one starts them. A Kestrel application does, and so does the test harness behind
+`[HardenedTestEntryPoint]` — which is what makes this invisible: the same widget's describe filter
+installs under `IWidgetDriver` and does not install under the Lambda runtime, so a suite that is
+green proves nothing about the deployed function.
+
+What silently did not run in a widget built the documented way:
+
+    DescribeStartupService    the console's Get documentation button got the landing page
+    CorsStartupService        never configured, and never logged the warning it exists to log
+    FilterRegistryStartupService, AuthenticationStartupService, AuthorizationStartupService
+
+`Run`'s own doc comment is the reason this reads as a defect rather than as a missing step: "The
+container is built before the loop starts, on purpose. Everything a request resolves exists by the
+time the first invocation arrives." A startup service is not something a request resolves, and
+nothing says an application has to be started separately.
+
+**Already fixed upstream, on the next line.** `Run(IServiceProvider)` at `0.31.0-rc1000` calls
+`ApplicationLogic.Start(serviceProvider, null)` before resolving the handler, which is exactly the
+fix. `Run(LambdaInvocationHandler)` still does not, and should not: it has no provider, and its own
+comment says it is for a host that assembled its own.
+
+So this is a finding against `0.30.0-rc1000` alone, and it goes away with the uptake rather than
+with a PR. **The workaround in `Program.cs` comes out then**, and until then it is harmless on
+either line: `ApplicationLogic.Start` guards its `IStartupService` loop with a
+`ConditionalWeakTable` of providers it has already started, so calling it twice on one provider runs
+them once.
+
+**Worked around here** by calling `ApplicationLogic.Start(provider, null)` in every `Program.cs` —
+the samples and all three templates. Two lines with a comment saying why, which is the honest form
+of a workaround that has to be repeated in a consumer's own entry point.
+
+    Fixed in: Hardened.Aws.Lambda.Runtime 0.31.0-rc1000
+
+---
+
 # Day-one checks
 
 Section 11 of the plan. Each is recorded here with what was observed.

@@ -60,6 +60,28 @@ it to whoever writes the query.
 total so the three that keep their identity are the three worth looking at. Summed rather than
 dropped: a chart that silently omits data is worse than one that groups it.
 
+## How big it is drawn
+
+`@Draw` sizes a chart to the widget the event describes, so a 24-column widget gets a chart across
+its whole width rather than 640 pixels of chart and empty space beside it. The drawing scales down
+to fit and never grows: a `viewBox` at `width="100%"` would scale the 11px labels too, and the chart
+would read as though somebody zoomed it.
+
+The height stays at the design height, because a widget's pixel height is what the whole panel has
+and only the view knows how much of it one chart may take. A view with a heading, three charts and a
+table says so:
+
+```csharp
+Chart.Across("Errors by function", rows).Sized(560, 200)
+```
+
+::: warning Unverified
+A widget's pixel width is converted from the grid units a dashboard body holds, at the ratio AWS's
+own sample implies — a default six-by-six widget at 588 by 369. The console's grid is responsive, so
+a real widget's pixel size depends on the viewer's window. A chart is clamped between 320 and 1200
+pixels rather than drawn arbitrarily wide on the strength of the estimate.
+:::
+
 ## The colours are validated, not chosen
 
 Four categorical slots per theme, checked against the console's own surfaces for the lightness band,

@@ -22,8 +22,12 @@ namespace LambdaWidgets.Runtime;
 /// </remarks>
 public sealed class WidgetAdapter : IPayloadAdapter {
     private readonly WidgetContextAccessor _context;
+    private readonly IWidgetErrors _errors;
 
-    public WidgetAdapter(WidgetContextAccessor context) => _context = context;
+    public WidgetAdapter(WidgetContextAccessor context, IWidgetErrors errors) {
+        _context = context;
+        _errors = errors;
+    }
 
     /// <summary>
     /// A payload carrying <c>widgetContext</c>.
@@ -49,6 +53,7 @@ public sealed class WidgetAdapter : IPayloadAdapter {
         // reach the invoked ARN without every template being handed it.
         _context.Current = invocation.Context;
         _context.Describe = invocation.Describe;
+        _context.RequestId = context.AwsRequestId ?? "";
 
         return WidgetRequest.From(invocation);
     }
@@ -91,6 +96,16 @@ public sealed class WidgetAdapter : IPayloadAdapter {
     /// </para>
     /// </remarks>
     public async ValueTask WriteResponse(IExecutionContext context, Stream output) {
+        // The serialized ErrorModel is already in the body by now, and it is the wrong answer: the
+        // console renders an object it does not recognise as JSON, so a widget that threw shows an
+        // operator a JSON blob where a designed page should be. The page is written instead of it
+        // rather than beside it.
+        if (context.Response.ExceptionValue is { } failure) {
+            await Quoted(output, _errors.Page(failure, _context.RequestId));
+
+            return;
+        }
+
         var body = context.Response.Body;
 
         if (body.CanSeek) {
@@ -113,6 +128,14 @@ public sealed class WidgetAdapter : IPayloadAdapter {
         // than round-tripping the page through a UTF-16 string.
         writer.WriteStringValue(
             rendered.TryGetBuffer(out var buffer) ? buffer.AsSpan() : rendered.ToArray());
+
+        await writer.FlushAsync();
+    }
+
+    private static async ValueTask Quoted(Stream output, string html) {
+        await using var writer = new Utf8JsonWriter(output);
+
+        writer.WriteStringValue(html);
 
         await writer.FlushAsync();
     }
@@ -147,6 +170,12 @@ public sealed class WidgetContextAccessor {
     /// anything routes.
     /// </remarks>
     internal bool Describe { get; set; }
+
+    /// <summary>
+    /// This invocation's request id, which is the only thing joining what a viewer saw to the
+    /// function's log.
+    /// </summary>
+    internal string RequestId { get; set; } = "";
 
     public IWidgetContext Value =>
         Current ?? throw new InvalidOperationException(

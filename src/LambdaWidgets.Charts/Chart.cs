@@ -60,6 +60,16 @@ public sealed record Chart {
     public string DrillField { get; init; } = "at";
 
     /// <summary>
+    /// How big to draw it, when the widget's own size is not the answer.
+    /// </summary>
+    /// <remarks>
+    /// Null lets <c>@Draw</c> size the chart to the widget the event describes, which is what a
+    /// chart alone in a widget wants. A view holding a heading, three charts and a table is the
+    /// case this exists for: only the view knows how much of the panel each chart may have.
+    /// </remarks>
+    public ChartSize? Size { get; init; }
+
+    /// <summary>
     /// Change over time.
     /// </summary>
     /// <remarks>
@@ -92,6 +102,9 @@ public sealed record Chart {
     };
 
     public Chart In(string unit) => this with { Unit = unit };
+
+    /// <summary>Draws it at this size rather than at the widget's.</summary>
+    public Chart Sized(int width, int height) => this with { Size = new ChartSize(width, height) };
 
     /// <summary>Makes each mark, and each row of the table, a link to <paramref name="route"/>.</summary>
     /// <param name="route">A string from the generated <c>Links</c>, never a literal.</param>

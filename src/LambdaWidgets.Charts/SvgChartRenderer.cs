@@ -14,7 +14,54 @@ public interface IChartRenderer {
     /// <param name="chart">What to draw.</param>
     /// <param name="theme">The dashboard's theme, which the console sent.</param>
     /// <param name="endpoint">The invoked ARN, for a chart whose marks link somewhere.</param>
-    string Render(Chart chart, ChartTheme theme, string endpoint);
+    /// <param name="size">
+    /// The coordinate space to draw in. Null is <see cref="ChartSize.Default"/>;
+    /// <c>@Draw</c> passes the widget's own, and <see cref="Chart.Sized"/> beats both.
+    /// </param>
+    string Render(Chart chart, ChartTheme theme, string endpoint, ChartSize? size = null);
+}
+
+/// <summary>
+/// The coordinate space a chart is drawn in.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>The drawing scales to fit and never grows past this.</b> A <c>viewBox</c> with
+/// <c>width="100%"</c> scales everything, text included: in a widget twice this wide the 11px
+/// labels render at 22 and the chart reads as though somebody zoomed it. Drawing at the widget's
+/// own width keeps type at the size it was chosen at, and a narrower widget still scales down
+/// rather than clipping.
+/// </para>
+/// </remarks>
+public readonly record struct ChartSize(int Width, int Height) {
+    /// <summary>What a chart is drawn at when nothing said otherwise.</summary>
+    public static readonly ChartSize Default = new(640, 260);
+
+    /// <summary>The narrowest a chart with an axis, a legend and direct labels stays readable at.</summary>
+    public const int Narrowest = 320;
+
+    /// <summary>
+    /// As wide as a chart is drawn however wide the widget is.
+    /// </summary>
+    /// <remarks>
+    /// A 24-column widget's pixel width is an estimate rather than a measurement — the console's
+    /// grid is responsive and the event's number is whatever it was when the widget loaded — so a
+    /// chart is not drawn arbitrarily wide on the strength of it.
+    /// </remarks>
+    public const int Widest = 1200;
+
+    /// <summary>
+    /// A chart sized to a widget <paramref name="widgetWidth"/> pixels across.
+    /// </summary>
+    /// <remarks>
+    /// <b>The width and not the height.</b> A widget's pixel height is what the whole panel has,
+    /// and a view holding a heading, three charts and a table has no way to say so from here.
+    /// A chart that should take the widget's height asks for one with <see cref="Chart.Sized"/>.
+    /// </remarks>
+    public static ChartSize For(int widgetWidth) =>
+        widgetWidth <= 0
+            ? Default
+            : Default with { Width = Math.Clamp(widgetWidth, Narrowest, Widest) };
 }
 
 /// <summary>
@@ -36,15 +83,6 @@ public interface IChartRenderer {
 /// </remarks>
 [SingletonService(As = typeof(IChartRenderer))]
 public sealed class SvgChartRenderer : IChartRenderer {
-    /// <summary>
-    /// The drawing's own coordinate space, which <c>viewBox</c> scales to whatever width the widget
-    /// has. A widget's pixel size is in the event, but it changes when the viewer drags the corner
-    /// and the SVG should follow without another invocation.
-    /// </summary>
-    private const int Width = 640;
-
-    private const int Height = 260;
-
     private const int Left = 52;
     private const int Right = 16;
     private const int Top = 18;
@@ -65,18 +103,31 @@ public sealed class SvgChartRenderer : IChartRenderer {
     /// </remarks>
     private const int Strip = 20;
 
-    private static int PlotWidth => Width - Left - Right;
-    private static int PlotHeight => Height - Top - Bottom;
+    /// <summary>
+    /// The drawing's own coordinate space, which <c>viewBox</c> scales to whatever width the widget
+    /// has. Passed down rather than held as constants, because a chart's size is the caller's:
+    /// <c>@Draw</c> reads the widget's own out of the event and <see cref="Chart.Sized"/> overrides
+    /// it. The margins below are not — they are the room an axis and its labels need, and they do
+    /// not change with the canvas.
+    /// </summary>
+    private readonly record struct Frame(int Width, int Height) {
+        public int PlotWidth => Width - Left - Right;
 
-    public string Render(Chart chart, ChartTheme theme, string endpoint) {
+        public int PlotHeight => Height - Top - Bottom;
+    }
+
+    public string Render(Chart chart, ChartTheme theme, string endpoint, ChartSize? size = null) {
         if (chart.IsEmpty) {
             return Empty(chart, theme);
         }
 
+        var asked = chart.Size ?? size ?? ChartSize.Default;
+        var frame = new Frame(asked.Width, asked.Height);
+
         return chart.Form switch {
             ChartForm.Stat => Stat(chart, theme),
-            ChartForm.Columns => Columns(chart, theme, endpoint),
-            _ => Line(chart, theme, endpoint)
+            ChartForm.Columns => Columns(chart, theme, endpoint, frame),
+            _ => Line(chart, theme, endpoint, frame)
         };
     }
 
@@ -105,21 +156,21 @@ public sealed class SvgChartRenderer : IChartRenderer {
             """;
     }
 
-    private static string Columns(Chart chart, ChartTheme theme, string endpoint) {
+    private static string Columns(Chart chart, ChartTheme theme, string endpoint, Frame frame) {
         var svg = new StringBuilder();
 
         var top = Ceiling(chart.Categories.Max(one => one.Value));
-        var band = (double)PlotWidth / chart.Categories.Count;
+        var band = (double)frame.PlotWidth / chart.Categories.Count;
         var thickness = Math.Min(MaxColumn, Math.Max(4, band - Gap * 2));
 
-        Open(svg, chart, theme, Height + Strip);
-        Grid(svg, theme, top);
+        Open(svg, chart, theme, frame, frame.Height + Strip);
+        Grid(svg, theme, frame, top);
 
         for (var i = 0; i < chart.Categories.Count; i++) {
             var category = chart.Categories[i];
-            var height = top <= 0 ? 0 : category.Value / top * PlotHeight;
+            var height = top <= 0 ? 0 : category.Value / top * frame.PlotHeight;
             var x = Left + band * i + (band - thickness) / 2;
-            var y = Top + PlotHeight - height;
+            var y = Top + frame.PlotHeight - height;
 
             // One series, one colour. Shading each column by its own value would spend the only
             // free channel restating the height, and nominal categories have no order to encode.
@@ -134,14 +185,14 @@ public sealed class SvgChartRenderer : IChartRenderer {
             // room a label actually has rather than to the band, which includes its neighbour's
             // whitespace.
             svg.Append(Label(
-                x + thickness / 2, Height - Bottom + 16, Clip(category.Name, band - 10),
+                x + thickness / 2, frame.Height - Bottom + 16, Clip(category.Name, band - 10),
                 theme.TextSecondary, "middle"));
 
             // The band is the hit target, not the column. A 24px column in a 114px band is a
             // pinpoint, and the reader is aiming at a category rather than at a rectangle.
             svg.Append($"""
                 <g class="lwb">
-                <rect x="{N(Left + band * i)}" y="{Top}" width="{N(band)}" height="{PlotHeight}"
+                <rect x="{N(Left + band * i)}" y="{Top}" width="{N(band)}" height="{frame.PlotHeight}"
                       fill="transparent" tabindex="0"/>
                 <g class="lwr" opacity="0">
                 <path d="{Column(x - 2, y - 2, thickness + 4, height + 2)}"
@@ -150,7 +201,7 @@ public sealed class SvgChartRenderer : IChartRenderer {
 
             // The full name, which is the one thing the axis cannot always show.
             svg.Append(Readout(
-                theme, [(theme.For(0), category.Name, Compact(category.Value))], moment: ""));
+                theme, frame, [(theme.For(0), category.Name, Compact(category.Value))], moment: ""));
 
             svg.Append("</g></g>");
         }
@@ -160,7 +211,7 @@ public sealed class SvgChartRenderer : IChartRenderer {
         return Figure(chart, theme, svg.ToString(), endpoint);
     }
 
-    private static string Line(Chart chart, ChartTheme theme, string endpoint) {
+    private static string Line(Chart chart, ChartTheme theme, string endpoint, Frame frame) {
         var svg = new StringBuilder();
 
         var readings = chart.Series.SelectMany(one => one.Readings).ToList();
@@ -169,11 +220,11 @@ public sealed class SvgChartRenderer : IChartRenderer {
         var to = readings.Max(one => one.At);
         var span = Math.Max(1, (to - from).TotalSeconds);
 
-        Open(svg, chart, theme, Height + Strip);
-        Grid(svg, theme, top);
+        Open(svg, chart, theme, frame, frame.Height + Strip);
+        Grid(svg, theme, frame, top);
 
-        double X(DateTimeOffset at) => Left + (at - from).TotalSeconds / span * PlotWidth;
-        double Y(double value) => Top + PlotHeight - (top <= 0 ? 0 : value / top * PlotHeight);
+        double X(DateTimeOffset at) => Left + (at - from).TotalSeconds / span * frame.PlotWidth;
+        double Y(double value) => Top + frame.PlotHeight - (top <= 0 ? 0 : value / top * frame.PlotHeight);
 
         // Where two series end close together the labels would overlap. Nudging them apart detaches
         // each from its own line and reads as noise, so the lower one is dropped instead - the
@@ -196,7 +247,7 @@ public sealed class SvgChartRenderer : IChartRenderer {
             // hue they cross and the lines stop being separable.
             if (chart.Series.Count == 1) {
                 svg.Append($"""
-                    <path d="{path} L{N(X(points[^1].At))},{N(Top + PlotHeight)} L{N(X(points[0].At))},{N(Top + PlotHeight)} Z"
+                    <path d="{path} L{N(X(points[^1].At))},{N(Top + frame.PlotHeight)} L{N(X(points[0].At))},{N(Top + frame.PlotHeight)} Z"
                           fill="{colour}" fill-opacity="0.1"/>
                     """);
             }
@@ -226,10 +277,10 @@ public sealed class SvgChartRenderer : IChartRenderer {
             }
         }
 
-        svg.Append(Label(Left, Height - Bottom + 16, Moment(from), theme.TextSecondary, "start"));
-        svg.Append(Label(Width - Right, Height - Bottom + 16, Moment(to), theme.TextSecondary, "end"));
+        svg.Append(Label(Left, frame.Height - Bottom + 16, Moment(from), theme.TextSecondary, "start"));
+        svg.Append(Label(frame.Width - Right, frame.Height - Bottom + 16, Moment(to), theme.TextSecondary, "end"));
 
-        Crosshair(svg, chart, theme, X, Y);
+        Crosshair(svg, chart, theme, frame, X, Y);
 
         svg.Append("</svg>");
 
@@ -272,8 +323,8 @@ public sealed class SvgChartRenderer : IChartRenderer {
     /// </para>
     /// </remarks>
     private static void Crosshair(
-        StringBuilder svg, Chart chart, ChartTheme theme, Func<DateTimeOffset, double> x,
-        Func<double, double> y) {
+        StringBuilder svg, Chart chart, ChartTheme theme, Frame frame,
+        Func<DateTimeOffset, double> x, Func<double, double> y) {
         var moments = chart.Series
             .SelectMany(one => one.Readings.Select(reading => reading.At))
             .Distinct()
@@ -284,7 +335,7 @@ public sealed class SvgChartRenderer : IChartRenderer {
             return;
         }
 
-        var band = (double)PlotWidth / moments.Count;
+        var band = (double)frame.PlotWidth / moments.Count;
 
         for (var i = 0; i < moments.Count; i++) {
             var at = moments[i];
@@ -308,14 +359,14 @@ public sealed class SvgChartRenderer : IChartRenderer {
             // nothing. The band is the hit target and it is the full height of the plot, which is
             // far bigger than any mark.
             svg.Append($"""
-                <rect x="{N(Left + band * i)}" y="{Top}" width="{N(band)}" height="{PlotHeight}"
+                <rect x="{N(Left + band * i)}" y="{Top}" width="{N(band)}" height="{frame.PlotHeight}"
                       fill="transparent" tabindex="0"/>
                 """);
 
             svg.Append("<g class=\"lwr\" opacity=\"0\">");
 
             svg.Append($"""
-                <line x1="{N(centre)}" y1="{Top}" x2="{N(centre)}" y2="{Top + PlotHeight}"
+                <line x1="{N(centre)}" y1="{Top}" x2="{N(centre)}" y2="{Top + frame.PlotHeight}"
                       stroke="{theme.Axis}" stroke-width="1"/>
                 """);
 
@@ -326,7 +377,7 @@ public sealed class SvgChartRenderer : IChartRenderer {
                     """);
             }
 
-            svg.Append(Readout(theme, rows.Select(row =>
+            svg.Append(Readout(theme, frame, rows.Select(row =>
                 (theme.For(row.Slot), row.Name, Compact(row.Reading.Value))).ToList(), Moment(at)));
 
             svg.Append("</g></g>");
@@ -351,8 +402,9 @@ public sealed class SvgChartRenderer : IChartRenderer {
     /// </para>
     /// </remarks>
     private static string Readout(
-        ChartTheme theme, IReadOnlyList<(string Colour, string Name, string Value)> rows, string moment) {
-        var y = Height + 13;
+        ChartTheme theme, Frame frame,
+        IReadOnlyList<(string Colour, string Name, string Value)> rows, string moment) {
+        var y = frame.Height + 13;
         var x = (double)Left;
 
         var row = new StringBuilder();
@@ -366,7 +418,7 @@ public sealed class SvgChartRenderer : IChartRenderer {
         foreach (var (colour, name, value) in rows) {
             // Whatever room is left on the row, so a single-series readout can spell out a name the
             // axis had to truncate - which is most of why the readout is worth having on columns.
-            var label = Clip(name, (Width - Right - x - 22 - value.Length * 6.2) / rows.Count);
+            var label = Clip(name, (frame.Width - Right - x - 22 - value.Length * 6.2) / rows.Count);
 
             row.Append($"""
                 <line x1="{N(x)}" y1="{y - 4}" x2="{N(x + 10)}" y2="{y - 4}"
@@ -387,9 +439,9 @@ public sealed class SvgChartRenderer : IChartRenderer {
         return row.ToString();
     }
 
-    private static void Open(StringBuilder svg, Chart chart, ChartTheme theme, int height = Height) =>
+    private static void Open(StringBuilder svg, Chart chart, ChartTheme theme, Frame frame, int height) =>
         svg.Append($"""
-            <svg viewBox="0 0 {Width} {height}" width="{Width}" role="img"
+            <svg viewBox="0 0 {frame.Width} {height}" width="{frame.Width}" role="img"
                  aria-label="{Text(chart.Title)}" style="display:block;max-width:100%;height:auto">
             """);
 
@@ -397,12 +449,12 @@ public sealed class SvgChartRenderer : IChartRenderer {
     /// Hairline, solid and one step off the surface. Dashed reads as a threshold or a projection
     /// when it is only a grid.
     /// </remarks>
-    private static void Grid(StringBuilder svg, ChartTheme theme, double top) {
+    private static void Grid(StringBuilder svg, ChartTheme theme, Frame frame, double top) {
         foreach (var value in Ticks(top)) {
-            var y = Top + PlotHeight - (top <= 0 ? 0 : value / top * PlotHeight);
+            var y = Top + frame.PlotHeight - (top <= 0 ? 0 : value / top * frame.PlotHeight);
 
             svg.Append($"""
-                <line x1="{Left}" y1="{N(y)}" x2="{Width - Right}" y2="{N(y)}"
+                <line x1="{Left}" y1="{N(y)}" x2="{frame.Width - Right}" y2="{N(y)}"
                       stroke="{theme.Grid}" stroke-width="1"/>
                 """);
 
@@ -410,7 +462,7 @@ public sealed class SvgChartRenderer : IChartRenderer {
         }
 
         svg.Append($"""
-            <line x1="{Left}" y1="{Top + PlotHeight}" x2="{Width - Right}" y2="{Top + PlotHeight}"
+            <line x1="{Left}" y1="{Top + frame.PlotHeight}" x2="{frame.Width - Right}" y2="{Top + frame.PlotHeight}"
                   stroke="{theme.Axis}" stroke-width="1"/>
             """);
     }

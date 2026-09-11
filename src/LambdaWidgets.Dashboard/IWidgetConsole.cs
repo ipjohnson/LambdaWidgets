@@ -13,6 +13,20 @@ namespace LambdaWidgets.Dashboard;
 /// Everything the linter found. Empty is the answer to want; the console reports none of these,
 /// so this is the only place an author learns about them.
 /// </param>
+/// <param name="Failed">
+/// Whether the function answered with something other than a page.
+/// <remarks>
+/// <para>
+/// Either an error page the runtime wrote because a handler threw, or a JSON object, which the
+/// console displays as text. Both render; neither is the widget.
+/// </para>
+/// <para>
+/// <b>Assert on this, or on <see cref="Findings"/> being empty.</b> A failed invocation and a
+/// successful one arrive as the same shape, so these two are what tell them apart —
+/// <see cref="Html"/> is non-empty either way.
+/// </para>
+/// </remarks>
+/// </param>
 public sealed record ShownWidget(
     ResponseKind Kind,
     string Html,
@@ -20,7 +34,8 @@ public sealed record ShownWidget(
     IReadOnlyList<WidgetAction> Actions,
     IReadOnlyDictionary<string, string> Forms,
     IReadOnlyList<Removal> Removals,
-    IReadOnlyList<Finding> Findings);
+    IReadOnlyList<Finding> Findings,
+    bool Failed = false);
 
 /// <summary>
 /// The CloudWatch console's side of a custom widget: what it sends, and what it shows.

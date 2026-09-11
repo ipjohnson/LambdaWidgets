@@ -15,7 +15,14 @@ main { display: grid; grid-template-columns: repeat(24, 1fr); gap: 16px; padding
 .rendered { min-height: 60px; }
 .failed { border-left: 3px solid #d13212; padding-left: 10px; }
 .failed pre { white-space: pre-wrap; }
+/* The console renders its own confirmation, so the harness does too - a native modal blocks every
+   event the page would have received and nothing can drive it. */
+.confirm { margin-top: 12px; border: 1px solid var(--line); border-left: 3px solid var(--accent);
+           padding: 10px; background: var(--ground); }
+.confirm p { margin: 0 0 8px; }
+.confirm button { margin-right: 8px; }
 .inspector { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 12px; }
 .inspector summary { cursor: pointer; color: var(--accent); }
 .inspector pre { overflow-x: auto; background: var(--ground); padding: 8px; }
 .fault { color: #d13212; }
+.findings { color: #d13212; margin: 4px 0 0; padding-left: 18px; }

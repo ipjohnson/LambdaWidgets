@@ -59,11 +59,18 @@ public sealed class WidgetConsole : IWidgetConsole {
                 Forms: new Dictionary<string, string>(),
                 Removals: Array.Empty<Removal>(),
                 // Markdown and JSON are text. Linting them would report the markup inside a code
-                // block as a widget's mistake.
-                Findings: Array.Empty<Finding>());
+                // block as a widget's mistake — but an object where a page was expected is itself
+                // worth one, because the console displays it and a test otherwise sees a widget
+                // that rendered nothing and found nothing wrong.
+                Findings: NotAPage(response),
+                Failed: response.Kind == ResponseKind.Json);
         }
 
         var cleaned = _sanitizer.Clean(response.Content);
+
+        // Linted from the raw answer rather than the cleaned one, because half the findings are
+        // about what the cleaning removed and there is nothing left of those afterwards.
+        var findings = _linter.Lint(response.Content);
 
         // Read from the cleaned HTML rather than the raw. An action inside a stripped element is
         // not on screen, so a driver must not be able to click it.
@@ -74,10 +81,22 @@ public sealed class WidgetConsole : IWidgetConsole {
             _actions.In(cleaned.Html),
             _forms.In(cleaned.Html),
             cleaned.Removals,
-            // Linted from the raw answer rather than the cleaned one, because half the findings are
-            // about what the cleaning removed and there is nothing left of those afterwards.
-            _linter.Lint(response.Content));
+            findings,
+            findings.Any(finding => finding.Rule == WidgetLinter.InvocationFailed));
     }
+
+    /// <remarks>
+    /// Markdown is a documented answer and gets none of these. A JSON object is what a function
+    /// returning the wrong shape produces, and it is the answer a thrown handler used to give.
+    /// </remarks>
+    private static IReadOnlyList<Finding> NotAPage(WidgetResponse response) =>
+        response.Kind == ResponseKind.Json
+            ? [new Finding(
+                WidgetLinter.NotAPage,
+                "the function answered with a JSON object rather than with HTML or markdown. The " +
+                "console displays it as text, so the widget renders and shows no page.",
+                response.Content.Length > 120 ? response.Content[..120] + "…" : response.Content)]
+            : Array.Empty<Finding>();
 
     public WidgetEvent Clicks(
         ShownWidget shown,

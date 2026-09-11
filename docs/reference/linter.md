@@ -26,10 +26,15 @@ See [cwdb-action](/reference/cwdb-action).
 - A form field without a `name`. It is never collected into `forms.all`, so the handler reading it
   gets nothing and cannot tell that from an empty value.
 
-## Endpoints that go nowhere
+## A widget that did not render
 
-- An `endpoint` whose function name has no configured target. In the console this is a failed
-  invoke; in the harness it is a finding before you click.
+- The answer is the error page the runtime writes when a handler threw. It is HTML and it renders,
+  so nothing else about the response says the invocation failed.
+- The answer is a JSON object rather than HTML or markdown. The console displays it as text.
+
+Both are what `Assert.Empty(page.Findings)` is for: a throttled query and a successful one arrive as
+the same shape, and without these the headline assertion passes on a widget that showed a viewer
+nothing. `ShownWidget.Failed` says the same thing directly.
 
 ## CSS that reaches other widgets
 

@@ -31,6 +31,29 @@ public class WhatTheConsoleSendsTests {
 
     // ------------------------------------------------------------------ appearing and refreshing
 
+    /// <summary>
+    /// Two different numbers wear the same name: a dashboard body holds a widget's size in grid
+    /// units, and <c>widgetContext.width</c> is pixels. Copying one into the other told a handler
+    /// a 24-column widget was 24 pixels across, so anything sizing itself to the widget - a chart,
+    /// a table's column count - got it wrong in the direction that looks like a rounding error.
+    /// </summary>
+    [HardenedTest]
+    public void AWidgetsGridUnitsReachTheEventAsPixels(IWidgetConsole console) {
+        var full = console.Opens(Search with { Width = 24, Height = 12 }, Ops);
+
+        Assert.Equal(588 * 4, full.Context.Width);
+        Assert.Equal(369 * 2, full.Context.Height);
+    }
+
+    /// <summary>And the default six-by-six widget is AWS's own sample's 588 by 369.</summary>
+    [HardenedTest]
+    public void ADefaultWidgetIsTheSizeAwsDocuments(IWidgetConsole console) {
+        var opened = console.Opens(Search, Ops);
+
+        Assert.Equal(588, opened.Context.Width);
+        Assert.Equal(369, opened.Context.Height);
+    }
+
     [HardenedTest]
     public void AWidgetOpensWithItsConfiguredParameters(IWidgetConsole console) {
         var opened = console.Opens(Search, Ops);

@@ -60,6 +60,35 @@ public sealed partial class WidgetLinter : IWidgetLinter {
     public const string FieldWithoutName = "field-without-name";
 
     /// <summary>
+    /// The answer is the error page <c>LambdaWidgets.Runtime</c> writes when a handler threw.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the rule that makes <c>Assert.Empty(page.Findings)</c> mean something.</b> A
+    /// failed invocation and a successful one reach the console as the same shape — a body — so
+    /// without this a widget whose query was throttled passes the headline assertion in the README,
+    /// the guide and all three templates.
+    /// </remarks>
+    public const string InvocationFailed = "invocation-failed";
+
+    /// <summary>
+    /// The function answered with a JSON object rather than with a page.
+    /// </summary>
+    /// <remarks>
+    /// Raised by <see cref="WidgetConsole"/> rather than here, because the answer never reaches the
+    /// linter: only HTML is linted. The console displays the object as text, which renders and is
+    /// not a widget.
+    /// </remarks>
+    public const string NotAPage = "not-a-page";
+
+    /// <summary>The attribute the runtime's error page carries, which is what finds it.</summary>
+    /// <remarks>
+    /// Named here rather than shared with <c>LambdaWidgets.Runtime</c>: that package is what a
+    /// widget deploys and this one is what reads its answer, and neither references the other.
+    /// Kept in step by <c>WhatTheLinterFindsTests</c>, which writes the attribute the runtime does.
+    /// </remarks>
+    public const string ErrorMarker = "data-lw-error";
+
+    /// <summary>
     /// A stylesheet rule whose selector can match another widget's content.
     /// </summary>
     /// <remarks>
@@ -110,8 +139,26 @@ public sealed partial class WidgetLinter : IWidgetLinter {
 
         findings.AddRange(UnnamedFields(html));
         findings.AddRange(UnscopedSelectors(html));
+        findings.AddRange(Failures(html));
 
         return findings;
+    }
+
+    /// <remarks>
+    /// Reported rather than only rendered. The page says what happened to a viewer; this is what
+    /// says it to a test, and to the harness's inspector.
+    /// </remarks>
+    private static IEnumerable<Finding> Failures(string html) {
+        var document = new HtmlParser().ParseDocument(html);
+
+        foreach (var element in document.QuerySelectorAll($"[{ErrorMarker}]")) {
+            yield return new Finding(
+                InvocationFailed,
+                $"the invocation failed with {element.GetAttribute(ErrorMarker)} and answered an " +
+                "error page rather than the widget. The function's log has the exception; set " +
+                "WIDGET_ERROR_DETAIL to put its message on the page.",
+                Markup(element));
+        }
     }
 
     private static Finding Describe(WidgetAction action, ActionFault fault) => fault switch {

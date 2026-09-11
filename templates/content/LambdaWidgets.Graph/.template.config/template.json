@@ -45,12 +45,24 @@
     {
       "modifiers": [
         {
+          "//": "The solution names both projects, so it goes when the test project does.",
           "condition": "(!tests)",
           "exclude": [
-            "WidgetName.Tests/**"
+            "WidgetName.Tests/**",
+            "WidgetName.sln"
           ]
         }
       ]
+    }
+  ],
+  "//primaryOutputs": "The restore post-action acts on these. Without them it reports 'No projects are configured to restore. Check primary outputs configuration in template.json.' as the last thing a new user reads.",
+  "primaryOutputs": [
+    {
+      "path": "WidgetName/WidgetName.csproj"
+    },
+    {
+      "condition": "(tests)",
+      "path": "WidgetName.Tests/WidgetName.Tests.csproj"
     }
   ],
   "postActions": [

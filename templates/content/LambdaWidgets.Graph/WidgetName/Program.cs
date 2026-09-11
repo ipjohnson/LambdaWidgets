@@ -21,4 +21,14 @@ services.AddTransient<IHardenedEnvironment>(_ => new EnvironmentImpl(arguments: 
 
 new WidgetNameApp().PopulateServiceCollection(services);
 
-await HardenedLambdaBootstrap.Run(services.BuildServiceProvider());
+var provider = services.BuildServiceProvider();
+
+// Startup services run here, and on the 0.30 line nothing else runs them. Without this the describe
+// filter is never installed and the console's Get documentation button answers with the widget's
+// landing page. Hardened.Aws.Lambda.Runtime 0.31.0-rc1000 does it inside
+// HardenedLambdaBootstrap.Run, so this line comes out with that uptake; until then it is harmless
+// on either line, because ApplicationLogic.Start runs a provider's startup services once.
+// FINDINGS.md F-11.
+await ApplicationLogic.Start(provider, null);
+
+await HardenedLambdaBootstrap.Run(provider);

@@ -30,7 +30,14 @@
     visible on a real dashboard.
   *@
   <details class="inspector">
-    <summary>@Model.View.Shown.Actions.Count action(s), @Model.View.Shown.Removals.Count removed, @Model.View.Invoke.Duration.TotalMilliseconds.ToString("0") ms</summary>
+    <summary>@Model.View.Shown.Actions.Count action(s), @Model.View.Shown.Removals.Count removed, @Model.View.Shown.Findings.Count finding(s), @Model.View.Invoke.Duration.TotalMilliseconds.ToString("0") ms</summary>
+    @*
+      The linter's findings, which the console reports nowhere and a test only sees as a count. A
+      widget that threw renders a page, so the finding is the thing that says so on screen.
+    *@
+    @if (Model.View.Shown.Findings.Count > 0) {
+      <ul class="findings">@foreach (var finding in Model.View.Shown.Findings) {<li>@finding.ToString()</li>}</ul>
+    }
     <h4>Event sent</h4>
     <pre>@Model.View.Event</pre>
     @if (Model.View.Shown.Removals.Count > 0) {

@@ -185,4 +185,33 @@ public class DrivingAWidgetTests {
         Assert.Empty(shown.Removals);
         Assert.Empty(shown.Actions.SelectMany(action => action.Faults));
     }
+
+    // ------------------------------------------------------------------ a widget that threw
+
+    /// <summary>
+    /// <c>Assert.Empty(page.Findings)</c> is the headline assertion in the README, the guide and
+    /// all three templates, and this is what stops it passing on a widget that rendered nothing.
+    /// A throttled query and a successful one arrive at the console as the same shape.
+    /// </summary>
+    [HardenedTest]
+    public async Task AWidgetThatThrewIsNotAPassingTest(IWidgetDriver widget) {
+        widget.Params["route"] = "/throttled";
+
+        var shown = await widget.Open();
+
+        Assert.True(shown.Failed);
+        Assert.Equal(WidgetLinter.InvocationFailed, Assert.Single(shown.Findings).Rule);
+    }
+
+    /// <summary>And the viewer gets a page rather than a JSON object.</summary>
+    [HardenedTest]
+    public async Task AWidgetThatThrewShowsAPage(IWidgetDriver widget) {
+        widget.Params["route"] = "/throttled";
+
+        var shown = await widget.Open();
+
+        Assert.Equal(ResponseKind.Html, shown.Kind);
+        Assert.Contains("This widget could not be rendered.", shown.Html);
+        Assert.DoesNotContain("Throughput exceeded", shown.Html);
+    }
 }

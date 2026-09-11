@@ -30,7 +30,7 @@ function bind(slot) {
 
 async function fire(slot, index, action) {
   const confirmation = action.getAttribute('confirmation');
-  if (confirmation && !window.confirm(confirmation)) return;
+  if (confirmation && !await ask(slot, confirmation)) return;
 
   // An html action shows its content; only a call goes back to the function.
   if (action.getAttribute('action') !== 'call') {
@@ -53,6 +53,28 @@ async function fire(slot, index, action) {
     body: JSON.stringify(fields)
   })).text();
   bind(slot);
+}
+
+// The console renders its own confirmation, and window.confirm is a native modal: it blocks every
+// event the page would have received, so a harness that used one could not be driven past a
+// confirmed action by anything. The markup is the harness's own rather than the widget's - a widget
+// asks by writing a confirmation attribute and never draws the dialog.
+function ask(slot, message) {
+  return new Promise(resolve => {
+    const panel = document.createElement('div');
+    panel.className = 'confirm';
+    panel.innerHTML =
+      '<p></p><button type="button" data-confirm="yes">OK</button>' +
+      '<button type="button" data-confirm="no">Cancel</button>';
+    panel.querySelector('p').textContent = message;
+
+    const answer = value => () => { panel.remove(); resolve(value); };
+    panel.querySelector('[data-confirm=yes]').addEventListener('click', answer(true));
+    panel.querySelector('[data-confirm=no]').addEventListener('click', answer(false));
+
+    (slot.querySelector('.widget') || slot).appendChild(panel);
+    panel.querySelector('[data-confirm=yes]').focus();
+  });
 }
 
 document.querySelectorAll('.slot').forEach(render);

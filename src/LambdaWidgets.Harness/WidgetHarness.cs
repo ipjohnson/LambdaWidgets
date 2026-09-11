@@ -11,7 +11,11 @@ namespace LambdaWidgets.Harness;
 /// <param name="Shown">The widget as the console would render it.</param>
 /// <param name="Event">The JSON that was sent, which the inspector shows.</param>
 /// <param name="Invoke">What came back, including how long it took and whether the function failed.</param>
-public sealed record WidgetView(ShownWidget Shown, string Event, InvokeResult Invoke);
+/// <remarks>
+/// The page's and the driver's shape. <c>WidgetView</c> in <see cref="HarnessApi"/> is the HTTP
+/// API's, which is JSON and carries none of the types above.
+/// </remarks>
+public sealed record WidgetRender(ShownWidget Shown, string Event, InvokeResult Invoke);
 
 /// <summary>
 /// The console, locally: a dashboard of widgets, the state they are invoked with, and what they
@@ -28,10 +32,10 @@ public interface IWidgetHarness {
     DashboardState State { get; set; }
 
     /// <summary>What each widget last rendered, for the page and the inspector.</summary>
-    IReadOnlyDictionary<string, WidgetView> Shown { get; }
+    IReadOnlyDictionary<string, WidgetRender> Shown { get; }
 
     /// <summary>Invokes a widget as the console does on load.</summary>
-    Task<WidgetView> Open(string widgetId, CancellationToken cancellationToken);
+    Task<WidgetRender> Open(string widgetId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Re-invokes every widget whose <c>updateOn</c> says this trigger should.
@@ -39,14 +43,14 @@ public interface IWidgetHarness {
     Task RefreshAll(DashboardTrigger trigger, CancellationToken cancellationToken);
 
     /// <summary>Fires one of a shown widget's actions.</summary>
-    Task<WidgetView> Click(
+    Task<WidgetRender> Click(
         string widgetId,
         int action,
         IReadOnlyDictionary<string, string> edits,
         CancellationToken cancellationToken);
 
     /// <summary>Asks a widget for its documentation, as the console's button does.</summary>
-    Task<WidgetView> Describe(string widgetId, CancellationToken cancellationToken);
+    Task<WidgetRender> Describe(string widgetId, CancellationToken cancellationToken);
 }
 
 /// <summary>What the viewer did to the dashboard, which decides which widgets re-invoke.</summary>
@@ -61,7 +65,7 @@ public enum DashboardTrigger {
 public sealed class WidgetHarness : IWidgetHarness {
     private readonly IWidgetConsole _console;
     private readonly IWidgetInvoker _invoker;
-    private readonly ConcurrentDictionary<string, WidgetView> _shown = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, WidgetRender> _shown = new(StringComparer.Ordinal);
 
     public WidgetHarness(IWidgetConsole console, IWidgetInvoker invoker, DashboardBody dashboard) {
         _console = console;
@@ -73,9 +77,9 @@ public sealed class WidgetHarness : IWidgetHarness {
 
     public DashboardState State { get; set; } = new();
 
-    public IReadOnlyDictionary<string, WidgetView> Shown => _shown;
+    public IReadOnlyDictionary<string, WidgetRender> Shown => _shown;
 
-    public Task<WidgetView> Open(string widgetId, CancellationToken cancellationToken) =>
+    public Task<WidgetRender> Open(string widgetId, CancellationToken cancellationToken) =>
         Send(Widget(widgetId), _console.Opens(Widget(widgetId), State), cancellationToken);
 
     /// <remarks>
@@ -95,7 +99,7 @@ public sealed class WidgetHarness : IWidgetHarness {
         }
     }
 
-    public Task<WidgetView> Click(
+    public Task<WidgetRender> Click(
         string widgetId,
         int action,
         IReadOnlyDictionary<string, string> edits,
@@ -111,20 +115,20 @@ public sealed class WidgetHarness : IWidgetHarness {
         return Send(widget, _console.Clicks(view.Shown, action, edits, widget, State), cancellationToken);
     }
 
-    public Task<WidgetView> Describe(string widgetId, CancellationToken cancellationToken) =>
+    public Task<WidgetRender> Describe(string widgetId, CancellationToken cancellationToken) =>
         Send(Widget(widgetId), _console.AsksForDocumentation(Widget(widgetId), State), cancellationToken);
 
     /// <remarks>
     /// The function name comes from the widget's own endpoint rather than from a setting, so one
     /// dashboard can hold widgets served by different targets at once.
     /// </remarks>
-    private async Task<WidgetView> Send(
+    private async Task<WidgetRender> Send(
         DashboardWidget widget, WidgetEvent widgetEvent, CancellationToken cancellationToken) {
         var payload = widgetEvent.ToJson();
 
         var result = await _invoker.Invoke(FunctionName(widget), payload, cancellationToken);
 
-        var view = new WidgetView(_console.Shows(result.Body, State), payload, result);
+        var view = new WidgetRender(_console.Shows(result.Body, State), payload, result);
 
         _shown[widget.Id] = view;
 
@@ -138,9 +142,15 @@ public sealed class WidgetHarness : IWidgetHarness {
         _ => true
     };
 
+    /// <remarks>
+    /// <c>KeyNotFoundException</c> rather than <c>InvalidOperationException</c>, matching
+    /// <see cref="HarnessRegistry.Get"/>: both are a lookup that missed, and
+    /// <see cref="HarnessErrors"/> is what turns one into a 404 carrying this message rather than
+    /// a 500 carrying none.
+    /// </remarks>
     private DashboardWidget Widget(string widgetId) =>
         Dashboard.Widgets.FirstOrDefault(one => one.Id == widgetId)
-        ?? throw new InvalidOperationException(
+        ?? throw new KeyNotFoundException(
             $"This dashboard has no widget '{widgetId}'. It has: " +
             string.Join(", ", Dashboard.Widgets.Select(one => one.Id)) + ".");
 
