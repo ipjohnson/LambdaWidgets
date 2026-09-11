@@ -235,6 +235,20 @@ public class WhatAWidgetInvocationDoesTests {
     }
 
     /// <summary>
+    /// A request the binding could not read is answered the same way, because the console has one
+    /// way of showing an answer and a JSON object is not it.
+    /// </summary>
+    [HardenedTest]
+    public async Task ARequestTheBindingCannotReadAlsoAnswersAPage(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """
+            {"route":"/search","limit":"not a number","widgetContext":{}}
+            """);
+
+        Assert.Contains("This widget could not be rendered.", answer);
+        Assert.DoesNotContain("ValidationError", answer);
+    }
+
+    /// <summary>
     /// One invocation at a time in a sandbox, but the handler is resolved once and reused across
     /// them, so a context left over from the last invocation would be served to the next.
     /// </summary>

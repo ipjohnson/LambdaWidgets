@@ -853,4 +853,4 @@ with `allowPrerelease: false` — without it a machine holding a .NET 11 preview
 project under the preview and prints `NETSDK1057` on every build. `verify.sh` runs the README's own
 commands from the directory it gives them in.
 
-245 tests, 21 in the generated projects.
+246 tests, 21 in the generated projects.
