@@ -40,5 +40,16 @@ public sealed class HarnessErrors : IExceptionToModelConverter {
         };
 
     private static ErrorModel Model(string type, Exception exception) =>
-        new() { Type = type, Message = exception.Message };
+        new() { Type = type, Message = Sentence(exception) };
+
+    /// <remarks>
+    /// <c>ArgumentException</c> appends <c>(Parameter 'action')</c> and the offending value to
+    /// whatever message it was given. That is for a stack trace; the caller of an HTTP API has no
+    /// parameter called <c>action</c> and is reading the sentence in front of it.
+    /// </remarks>
+    private static string Sentence(Exception exception) {
+        var appended = exception.Message.IndexOf(" (Parameter ", StringComparison.Ordinal);
+
+        return appended < 0 ? exception.Message : exception.Message[..appended];
+    }
 }

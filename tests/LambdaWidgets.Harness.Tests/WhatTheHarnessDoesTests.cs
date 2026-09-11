@@ -316,6 +316,23 @@ public class WhatTheHarnessDoesTests {
     }
 
     /// <summary>
+    /// An index the widget does not have is the caller's mistake and the message says so. What it
+    /// does not say is "(Parameter 'action')", which is for a stack trace: the caller of an HTTP
+    /// API has no parameter called action.
+    /// </summary>
+    [Fact]
+    public void AnArgumentExceptionsAppendedParameterNameIsNotPartOfTheMessage() {
+        var (status, model) = new HarnessErrors().ConvertExceptionToModel(
+            null!,
+            new ArgumentOutOfRangeException("action", 9, "This widget has 1 action(s), so there is nothing at that index."));
+
+        Assert.Equal(404, status);
+        Assert.Equal(
+            "This widget has 1 action(s), so there is nothing at that index.",
+            ((ErrorModel)model).Message);
+    }
+
+    /// <summary>
     /// Anything else keeps the framework's answer, because an unrecognised exception's message is
     /// the server's and not the caller's.
     /// </summary>
