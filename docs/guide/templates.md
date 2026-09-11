@@ -15,11 +15,13 @@ Everything is on the `0.1.0-rc1000` line, so `dotnet new install` needs the vers
 `dotnet new install LambdaWidgets.Templates::0.1.0-rc1000`. See [status](/status).
 :::
 
-Each one produces two projects and a dashboard file:
+Each one produces two projects, a solution, and a dashboard file:
 
 ```
 OrdersSearch/            the widget: handlers, views, and the data source behind an interface
 OrdersSearch.Tests/      tests that drive it the way a viewer does
+OrdersSearch.sln         so `dotnet build` and `dotnet test` work with nothing named
+global.json              pins a released SDK, so a machine holding a preview does not use it
 dashboard.json           a one-widget dashboard for the harness
 README.md
 ```
@@ -36,7 +38,7 @@ lambda-widgets --dashboard dashboard.json  # the console's side, on http://local
 | Option | Default | What it does |
 |---|---|---|
 | `-n`, `--name` | `MyWidget` | The project name, the namespace, and the class prefix. |
-| `--tests` | `true` | `--tests false` leaves out the test project. |
+| `--tests` | `true` | `--tests false` leaves out the test project, and the solution with it. |
 | `--hardenedVersion` | `0.30.0-rc1000` | The Hardened.Framework version to reference. |
 | `--widgetsVersion` | `0.1.0-rc1000` | The LambdaWidgets version to reference. |
 
@@ -103,7 +105,8 @@ public async Task NothingTheWidgetRendersIsThrownAway(IWidgetDriver widget) =>
 
 That is the [linter](/reference/linter) asserting the console would keep everything the widget
 rendered. A stripped `onclick` or an action that binds nothing renders perfectly and then does
-nothing at all.
+nothing at all, and so does a handler that threw — a failed invocation is a finding too, so this
+assertion catches a widget that answered an error page instead of a page.
 
 ## Deploying
 

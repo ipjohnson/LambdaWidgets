@@ -1,0 +1,8 @@
+{
+  "//": "Pinned so the generated project builds under a released SDK. Without it a machine holding a .NET preview builds under the preview and prints NETSDK1057 on every build. latestMajor takes any newer released SDK, so this does not go stale.",
+  "sdk": {
+    "version": "8.0.100",
+    "rollForward": "latestMajor",
+    "allowPrerelease": false
+  }
+}

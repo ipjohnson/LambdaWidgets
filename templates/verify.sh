@@ -62,6 +62,18 @@ for template in lw-logs lw-ddb lw-graph; do
     dotnet build "$out/Probe/Probe.csproj" --configuration Release --nologo --verbosity quiet -warnaserror
     dotnet test "$out/Probe.Tests/Probe.Tests.csproj" --configuration Release --nologo --verbosity quiet
 
+    # And the commands the generated README actually gives, from the directory it gives them in.
+    # `dotnet test` with nothing named needs a solution file; two projects and no solution is
+    # MSB1003, which is what a new user met following the README.
+    (cd "$out" && dotnet build --configuration Release --nologo --verbosity quiet)
+    (cd "$out" && dotnet test --configuration Release --nologo --verbosity quiet)
+
+    # Without a pin the generated project builds under whatever preview SDK is installed and prints
+    # NETSDK1057 on every build. This repository pins its own; the template has to pin the one it
+    # ships.
+    test -f "$out/global.json" \
+        || { echo "::error::$template generated no global.json"; exit 1; }
+
     # The assembly name is the Lambda handler, and it is what a deployment registers.
     test -f "$out/Probe/bin/Release/net8.0/customWidgetProbe.dll" \
         || { echo "::error::$template did not produce customWidgetProbe.dll"; exit 1; }
