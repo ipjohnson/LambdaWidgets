@@ -43,6 +43,47 @@ public class WhatTheConsoleShowsTests {
     }
 
     /// <summary>
+    /// Shown, and reported. The console displays an object it does not recognise, so the widget
+    /// renders and carries no page — which a test asserting on the HTML alone cannot see.
+    /// </summary>
+    [HardenedTest]
+    public void AnUnrecognisedShapeIsAlsoAFinding(IWidgetConsole console) {
+        var shown = console.Shows("""{"orders":3,"stale":false}""", Ops);
+
+        Assert.True(shown.Failed);
+        Assert.Equal(WidgetLinter.NotAPage, Assert.Single(shown.Findings).Rule);
+    }
+
+    /// <summary>Markdown is a documented answer, so it is neither.</summary>
+    [HardenedTest]
+    public void AMarkdownAnswerIsNeitherFailedNorAFinding(IWidgetConsole console) {
+        var shown = console.Shows("""{"markdown":"## Orders"}""", Ops);
+
+        Assert.False(shown.Failed);
+        Assert.Empty(shown.Findings);
+    }
+
+    /// <summary>
+    /// The error page the runtime writes when a handler throws. It is HTML and it renders, so
+    /// nothing about the answer's shape says the invocation failed.
+    /// </summary>
+    [HardenedTest]
+    public void TheRuntimesErrorPageIsAFailure(IWidgetConsole console) {
+        var shown = console.Shows(
+            Answer("""<div data-lw-error="InvalidOperationException">This widget could not be rendered.</div>"""),
+            Ops);
+
+        Assert.True(shown.Failed);
+        Assert.Equal(WidgetLinter.InvocationFailed, Assert.Single(shown.Findings).Rule);
+    }
+
+    /// <summary>And a widget that rendered is not reported as one that did not.</summary>
+    [HardenedTest]
+    public void AWidgetThatRenderedHasNotFailed(IWidgetConsole console) {
+        Assert.False(console.Shows(Answer("<h1>Orders</h1>"), Ops).Failed);
+    }
+
+    /// <summary>
     /// Markdown and JSON are text. Parsing either as a document would invent actions and fields
     /// out of whatever happened to look like markup.
     /// </summary>

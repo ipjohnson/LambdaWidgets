@@ -52,6 +52,12 @@ public partial class LambdaWidgetModule : IServiceCollectionConfiguration {
         services.TryAddScoped(provider =>
             provider.GetRequiredService<WidgetContextAccessor>().Value);
 
+        // The page a failed invocation answers with. Resolved through a factory because
+        // IHardenedEnvironment is the application's to register, and a widget that has not
+        // registered one should still get an error page rather than a resolution failure.
+        services.TryAddSingleton<IWidgetErrors>(provider =>
+            new WidgetErrors(provider.GetService<IHardenedEnvironment>()));
+
         // Describe, answered ahead of dispatch. The default says nothing, which is what AWS
         // recommends for a widget with no documentation and is why an application that writes none
         // still answers the console's button.

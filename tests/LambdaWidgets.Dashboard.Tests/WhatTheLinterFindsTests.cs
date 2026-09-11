@@ -154,6 +154,29 @@ public class WhatTheLinterFindsTests {
 
     // ------------------------------------------------------------------ nothing wrong
 
+    // ------------------------------------------------------------------ a widget that threw
+
+    /// <summary>
+    /// The rule that makes <c>Assert.Empty(page.Findings)</c> mean something. A failed invocation
+    /// and a successful one reach the console as the same shape, so without this the headline
+    /// assertion in the README, the guide and all three templates passes on a widget that threw.
+    ///
+    /// <para>
+    /// The markup is the runtime's own, written here rather than referenced: the package that
+    /// writes it is what a widget deploys and this one is what reads the answer, and neither
+    /// references the other. This test is what keeps the two in step.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheRuntimesErrorPageIsReported() {
+        Assert.Equal(WidgetLinter.InvocationFailed, Rule("""
+            <div data-lw-error="InvalidOperationException" style="border-left:3px solid #d13212;padding-left:10px">
+              <p style="margin:0 0 4px"><b>This widget could not be rendered.</b></p>
+              <p style="margin:0;font-size:12px;color:#687078">Request probe-1</p>
+            </div>
+            """));
+    }
+
     /// <summary>
     /// The shape the Razor helpers emit. A linter that reported anything here would be a linter
     /// nobody left switched on.
