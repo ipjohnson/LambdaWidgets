@@ -805,12 +805,18 @@ reaches a real dashboard.
 Found while checking the endpoints for the HTTP API reference, which was documenting a click body
 the endpoint refuses. `POST .../describe` answered with the widget's landing page.
 
-`HardenedLambdaBootstrap.Run` resolves the invocation handler and serves the loop. It never calls
-`ApplicationLogic.Start`, so no `IStartupService` any module registered ever ran. CORS and
-authorization were not running either. The reason it was invisible is worth the entry on its own:
-`[HardenedTestEntryPoint]` **does** start the application, so the same widget answered markdown
-under `IWidgetDriver` and HTML under the Lambda runtime. A green suite proved nothing about the
-deployed function. F-11.
+`HardenedLambdaBootstrap.Run` resolves the invocation handler and serves the loop. At
+`0.30.0-rc1000` it never calls `ApplicationLogic.Start`, so no `IStartupService` any module
+registered ever ran. CORS and authorization were not running either. The reason it was invisible is
+worth the entry on its own: `[HardenedTestEntryPoint]` **does** start the application, so the same
+widget answered markdown under `IWidgetDriver` and HTML under the Lambda runtime. A green suite
+proved nothing about the deployed function.
+
+Already fixed on the next line — `0.31.0-rc1000` starts the application inside `Run` — so F-11 is a
+finding against the version pinned here rather than something to send upstream, and the two lines in
+every `Program.cs` come out with the uptake. Checked rather than assumed: the Kestrel runner has
+always called it, and `ApplicationLogic.Start` runs a provider's startup services once, so the
+workaround is harmless on either line.
 
 ### Two numbers wearing the same name
 

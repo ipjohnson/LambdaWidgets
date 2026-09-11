@@ -347,14 +347,22 @@ container is built before the loop starts, on purpose. Everything a request reso
 time the first invocation arrives." A startup service is not something a request resolves, and
 nothing says an application has to be started separately.
 
-**Fix:** `Run` should call `ApplicationLogic.Start` before entering the loop, the way the other
-hosts do.
+**Already fixed upstream, on the next line.** `Run(IServiceProvider)` at `0.31.0-rc1000` calls
+`ApplicationLogic.Start(serviceProvider, null)` before resolving the handler, which is exactly the
+fix. `Run(LambdaInvocationHandler)` still does not, and should not: it has no provider, and its own
+comment says it is for a host that assembled its own.
+
+So this is a finding against `0.30.0-rc1000` alone, and it goes away with the uptake rather than
+with a PR. **The workaround in `Program.cs` comes out then**, and until then it is harmless on
+either line: `ApplicationLogic.Start` guards its `IStartupService` loop with a
+`ConditionalWeakTable` of providers it has already started, so calling it twice on one provider runs
+them once.
 
 **Worked around here** by calling `ApplicationLogic.Start(provider, null)` in every `Program.cs` —
-the samples, all three templates and the guide. Two lines with a comment saying why, which is the
-honest form of a workaround that has to be repeated in a consumer's own entry point.
+the samples and all three templates. Two lines with a comment saying why, which is the honest form
+of a workaround that has to be repeated in a consumer's own entry point.
 
-    PR: none yet
+    Fixed in: Hardened.Aws.Lambda.Runtime 0.31.0-rc1000
 
 ---
 
