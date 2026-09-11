@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Hardened.Requests.Abstract.Errors;
 using LambdaWidgets.Dashboard;
 using LambdaWidgets.Harness.Invoke;
 using Xunit;
@@ -275,6 +276,56 @@ public class WhatTheHarnessDoesTests {
         var refused = Assert.Throws<KeyNotFoundException>(() => registry.Get("nonesuch"));
 
         Assert.Contains("POST /api/dashboards", refused.Message);
+    }
+
+    /// <summary>
+    /// The message a dev tool should give, and it has to reach the caller rather than the log.
+    /// </summary>
+    [Fact]
+    public async Task AnUnknownWidgetNamesTheOnesTheDashboardHas() {
+        var harness = Harness(new RecordingTarget("\"<p>ok</p>\""));
+
+        var refused = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => harness.Open("0", TestContext.Current.CancellationToken));
+
+        Assert.Contains("has no widget '0'", refused.Message);
+        Assert.Contains("widget-1", refused.Message);
+    }
+
+    /// <summary>
+    /// And the response carries it. Without this the caller gets
+    /// <c>{"type":"ServerError","message":"The server could not complete this request."}</c> and
+    /// the good message exists only in the server's own log, which for a local harness is most of
+    /// the value thrown away.
+    /// </summary>
+    [Fact]
+    public void TheHarnessOwnMessagesReachTheCaller() {
+        var errors = new HarnessErrors();
+
+        var (missing, missingModel) = errors.ConvertExceptionToModel(
+            null!, new KeyNotFoundException("This dashboard has no widget '0'. It has: widget-1."));
+
+        Assert.Equal(404, missing);
+        Assert.Contains("has no widget '0'", ((ErrorModel)missingModel).Message);
+
+        var (unrendered, unrenderedModel) = errors.ConvertExceptionToModel(
+            null!, new InvalidOperationException("Widget 'widget-1' has not been rendered."));
+
+        Assert.Equal(409, unrendered);
+        Assert.Contains("has not been rendered", ((ErrorModel)unrenderedModel).Message);
+    }
+
+    /// <summary>
+    /// Anything else keeps the framework's answer, because an unrecognised exception's message is
+    /// the server's and not the caller's.
+    /// </summary>
+    [Fact]
+    public void AnythingElseIsStillAServerError() {
+        var (status, model) = new HarnessErrors()
+            .ConvertExceptionToModel(null!, new NotSupportedException("a connection string"));
+
+        Assert.Equal(500, status);
+        Assert.DoesNotContain("connection string", ((ErrorModel)model).Message);
     }
 
     private static IHarnessRegistry Registry(RecordingTarget target) =>

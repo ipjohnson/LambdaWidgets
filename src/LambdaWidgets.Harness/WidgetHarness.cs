@@ -138,9 +138,15 @@ public sealed class WidgetHarness : IWidgetHarness {
         _ => true
     };
 
+    /// <remarks>
+    /// <c>KeyNotFoundException</c> rather than <c>InvalidOperationException</c>, matching
+    /// <see cref="HarnessRegistry.Get"/>: both are a lookup that missed, and
+    /// <see cref="HarnessErrors"/> is what turns one into a 404 carrying this message rather than
+    /// a 500 carrying none.
+    /// </remarks>
     private DashboardWidget Widget(string widgetId) =>
         Dashboard.Widgets.FirstOrDefault(one => one.Id == widgetId)
-        ?? throw new InvalidOperationException(
+        ?? throw new KeyNotFoundException(
             $"This dashboard has no widget '{widgetId}'. It has: " +
             string.Join(", ", Dashboard.Widgets.Select(one => one.Id)) + ".");
 
