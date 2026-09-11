@@ -52,7 +52,7 @@ public class HarnessApi(IHarnessRegistry registry) {
 
     /// <summary>Invokes a widget as the console does when it appears, and answers what it shows.</summary>
     [Get("/api/dashboards/{id}/widgets/{widgetId}")]
-    public async Task<WidgetView_> Open(string id, string widgetId, CancellationToken cancellationToken) =>
+    public async Task<WidgetView> Open(string id, string widgetId, CancellationToken cancellationToken) =>
         Describe(await registry.Get(id).Open(widgetId, cancellationToken));
 
     /// <summary>What is clickable on a shown widget, by the text a viewer would read.</summary>
@@ -66,7 +66,7 @@ public class HarnessApi(IHarnessRegistry registry) {
 
     /// <param name="fields">What is in the widget's form fields now. Untouched ones keep what the function rendered.</param>
     [Post("/api/dashboards/{id}/widgets/{widgetId}/actions/{index}")]
-    public async Task<WidgetView_> Click(
+    public async Task<WidgetView> Click(
         string id,
         string widgetId,
         int index,
@@ -75,7 +75,7 @@ public class HarnessApi(IHarnessRegistry registry) {
         Describe(await registry.Get(id).Click(widgetId, index, fields, cancellationToken));
 
     [Post("/api/dashboards/{id}/widgets/{widgetId}/describe")]
-    public async Task<WidgetView_> Describe(string id, string widgetId, CancellationToken cancellationToken) =>
+    public async Task<WidgetView> Describe(string id, string widgetId, CancellationToken cancellationToken) =>
         Describe(await registry.Get(id).Describe(widgetId, cancellationToken));
 
     /// <summary>Re-invokes every widget whose <c>updateOn</c> asked to hear about a refresh.</summary>
@@ -107,7 +107,7 @@ public class HarnessApi(IHarnessRegistry registry) {
             harness.State.TimeRange.Effective.End,
             harness.Dashboard.Widgets.Select(one => one.Id).ToList());
 
-    private static WidgetView_ Describe(WidgetView view) =>
+    private static WidgetView Describe(WidgetRender view) =>
         new(view.Shown.Kind.ToString(),
             view.Shown.Html,
             view.Shown.Styles,
@@ -130,9 +130,18 @@ public record DashboardStateRequest(
 public record DashboardStateView(
     string Name, string Theme, DateTimeOffset Start, DateTimeOffset End, IReadOnlyList<string> Widgets);
 
+/// <summary>
+/// One widget, as the HTTP API reports it.
+/// </summary>
+/// <param name="Kind">Whether the function answered with <c>Html</c>, <c>Markdown</c> or <c>Json</c>.</param>
 /// <param name="Raw">The Invoke response as it came back, for a test asserting on the wire.</param>
 /// <param name="Event">The JSON the console would have sent, which is the thing hardest to get right.</param>
-public record WidgetView_(
+/// <param name="FunctionError">
+/// What the Invoke API's <c>X-Amz-Function-Error</c> header said, or null. This is the function
+/// failing to answer at all; a handler that threw and was answered for shows up as a
+/// <c>invocation-failed</c> finding instead.
+/// </param>
+public record WidgetView(
     string Kind,
     string Html,
     string Styles,
