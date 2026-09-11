@@ -163,6 +163,28 @@ public class WhatAWidgetInvocationDoesTests {
     }
 
     /// <summary>
+    /// A payload with no <c>timeRange</c> gets the dashboard's default window rather than a
+    /// zero-length one in 1970.
+    ///
+    /// <para>
+    /// This is what the Lambda console's Test button and the test tool's default payload send. The
+    /// epoch default rendered "nothing in this time range" against a full table while every driver
+    /// test stayed green, because the driver sends a real range and never reached this.
+    /// </para>
+    /// </summary>
+    [HardenedTest]
+    public async Task AnEventWithNoTimeRangeGetsTheDefaultWindow(LambdaInvocationHandler handler) {
+        var answer = await Invoke(handler, """{"route":"/context","widgetContext":{}}""");
+
+        var start = DateTimeOffset.Parse(answer.Split('|')[3]);
+
+        Assert.InRange(
+            DateTimeOffset.UtcNow - start,
+            TimeSpan.FromHours(3) - TimeSpan.FromMinutes(1),
+            TimeSpan.FromHours(3) + TimeSpan.FromMinutes(1));
+    }
+
+    /// <summary>
     /// The ARN the helpers write into a <c>cwdb-action</c>'s endpoint, so a widget calls back into
     /// the function and alias the viewer actually reached rather than one written into a template.
     /// </summary>

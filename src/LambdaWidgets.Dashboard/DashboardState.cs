@@ -111,6 +111,11 @@ public sealed record DashboardState {
 
     public Period Period { get; init; } = Period.Auto();
 
+    /// <remarks>
+    /// The same three hours the runtime gives a payload that carries no <c>timeRange</c>. The two
+    /// have to agree: a driver that sent a real range while the runtime's default was a zero-length
+    /// window at the epoch is a suite that cannot catch the widget rendering nothing.
+    /// </remarks>
     public WidgetTimeRange TimeRange { get; init; } = WidgetTimeRange.Relative(TimeSpan.FromHours(3));
 
     public Theme Theme { get; init; } = Theme.Light;
