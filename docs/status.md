@@ -38,8 +38,9 @@ is useful whether or not you ever use anything in this repository.
 
 The guide describes what is released. The few pages with something still unproven say so at the
 top: [deploying](/guide/deploying) has not been run against a real account, the console's handling
-of a chart's `style` block and its `cwdb-action` elements is [unverified](/guide/charting-data), and
-`--aws` is the one [invoke target](/reference/invoke-targets) not built.
+of a chart's `style` block and its `cwdb-action` elements is [unverified](/guide/charting-data), the
+pixel size the console reports for a widget is [estimated](/guide/charting-data) from the grid units
+a dashboard body holds, and `--aws` is the one [invoke target](/reference/invoke-targets) not built.
 
 ## Why it exists
 
